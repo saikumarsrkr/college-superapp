@@ -21,6 +21,18 @@ export default function Arena() {
       }
     }
     fetchSkills()
+
+    // Real-time subscription
+    const subscription = supabase
+      .channel('skills-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'skills' }, () => {
+        fetchSkills()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
   }, [])
 
   const getNodeById = (id) => skills.find(s => s.id === id)

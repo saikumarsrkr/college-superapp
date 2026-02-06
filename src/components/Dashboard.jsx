@@ -9,8 +9,8 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchClasses = async () => {
       const { data } = await supabase.from('classes').select('*').order('start_time', { ascending: true })
-      if (data && data.length > 0) {
-        // Transform DB data to UI format if needed, or just use as is
+      if (data) {
+        // Transform DB data to UI format
         const formatted = data.map(c => ({
           id: c.id,
           name: c.name,
@@ -23,12 +23,24 @@ export default function Dashboard() {
     }
     fetchClasses()
     
+    // Real-time subscription
+    const subscription = supabase
+      .channel('classes-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'classes' }, () => {
+        fetchClasses()
+      })
+      .subscribe()
+
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         supabase.from('profiles').select('*').eq('id', user.id).single()
           .then(({ data }) => setProfile(data))
       }
     })
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
   }, [])
 
   const handleLogout = async () => {

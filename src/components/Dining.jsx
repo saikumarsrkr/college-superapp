@@ -17,6 +17,19 @@ export default function Dining() {
       if (data) setMeals(data)
     }
     fetchMeals()
+
+    // Real-time subscription
+    const subscription = supabase
+      .channel('meals-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, (payload) => {
+        // Fetch fresh data on any change to keep it simple and accurate
+        fetchMeals()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
   }, [])
 
   return (

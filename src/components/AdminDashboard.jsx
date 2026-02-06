@@ -10,6 +10,23 @@ export default function AdminDashboard({ onLogout }) {
 
   useEffect(() => {
     fetchItems()
+
+    // Real-time subscription for the active section
+    let table = ''
+    if (activeSection === 'dining') table = 'meals'
+    if (activeSection === 'classes') table = 'classes'
+    if (activeSection === 'skills') table = 'skills'
+
+    const subscription = supabase
+      .channel('admin-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: table }, () => {
+        fetchItems()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
   }, [activeSection])
 
   const fetchItems = async () => {
