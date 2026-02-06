@@ -1,11 +1,6 @@
+import { useState, useEffect } from 'react'
 import { Utensils, Star, Camera, Droplets, Zap, Wifi } from 'lucide-react'
-
-const meals = [
-  { id: 1, name: 'Breakfast', time: '7:30 - 9:00', menu: 'Idli, Dosa, Tea', rating: 4 },
-  { id: 2, name: 'Lunch', time: '12:30 - 2:00', menu: 'Rice, Dal, Sabzi', rating: 3 },
-  { id: 3, name: 'Snacks', time: '4:30 - 5:30', menu: 'Samosa, Coffee', rating: 5 },
-  { id: 4, name: 'Dinner', time: '7:30 - 9:00', menu: 'Roti, Curry, Rice', rating: 4 },
-]
+import { supabase } from '../lib/supabase'
 
 const maintenance = [
   { id: 'plumbing', icon: Droplets, label: 'Plumbing', color: 'text-blue-400' },
@@ -14,6 +9,16 @@ const maintenance = [
 ]
 
 export default function Dining() {
+  const [meals, setMeals] = useState([])
+
+  useEffect(() => {
+    const fetchMeals = async () => {
+      const { data } = await supabase.from('meals').select('*').order('served_at', { ascending: true })
+      if (data) setMeals(data)
+    }
+    fetchMeals()
+  }, [])
+
   return (
     <section className="space-y-6">
       <div>
@@ -24,30 +29,34 @@ export default function Dining() {
 
         {/* Mess Menu - Horizontal Scroll */}
         <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-          {meals.map((meal) => (
-            <article key={meal.id} className="glass p-4 min-w-[200px] flex-shrink-0">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <h3 className="text-white font-semibold">{meal.name}</h3>
-                  <p className="text-xs text-slate-400">{meal.time}</p>
+          {meals.length === 0 ? (
+            <p className="text-slate-500 text-sm italic">No meals scheduled yet.</p>
+          ) : (
+            meals.map((meal) => (
+              <article key={meal.id} className="glass p-4 min-w-[200px] flex-shrink-0">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <h3 className="text-white font-semibold">{meal.name}</h3>
+                    <p className="text-xs text-slate-400">{meal.served_at ? meal.served_at.slice(0, 5) : ''}</p>
+                  </div>
+                  <button className="p-2 bg-neon-blue/20 rounded-full text-neon-blue hover:bg-neon-blue/30 transition-all">
+                    <Camera className="w-4 h-4" />
+                  </button>
                 </div>
-                <button className="p-2 bg-neon-blue/20 rounded-full text-neon-blue hover:bg-neon-blue/30 transition-all">
-                  <Camera className="w-4 h-4" />
-                </button>
-              </div>
-              <p className="text-sm text-slate-300 mb-3">{meal.menu}</p>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${
-                      star <= meal.rating ? 'text-neon-gold fill-neon-gold' : 'text-slate-600'
-                    }`}
-                  />
-                ))}
-              </div>
-            </article>
-          ))}
+                <p className="text-sm text-slate-300 mb-3">{meal.items}</p>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`w-4 h-4 ${
+                        star <= (meal.rating || 0) ? 'text-neon-gold fill-neon-gold' : 'text-slate-600'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </div>
 

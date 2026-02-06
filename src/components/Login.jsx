@@ -23,12 +23,24 @@ export default function Login({ onLogin }) {
         if (error) throw error
         alert('Check your email for the login link!')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
-        onLogin()
+        
+        // Check role
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+        
+        if (profile?.role === 'admin') {
+          onLogin('admin')
+        } else {
+          onLogin('student')
+        }
       }
     } catch (error) {
       setError(error.message)

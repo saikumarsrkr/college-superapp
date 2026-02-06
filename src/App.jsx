@@ -8,29 +8,47 @@ import Arena from './components/Arena'
 import Dining from './components/Dining'
 import Vault from './components/Vault'
 import Login from './components/Login'
+import AdminDashboard from './components/AdminDashboard'
 import { supabase } from './lib/supabase'
 
 function App() {
   const [session, setSession] = useState(null)
+  const [role, setRole] = useState(null)
   const [activeTab, setActiveTab] = useState('home')
   const [ghostMode, setGhostMode] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      if (session) fetchRole(session.user.id)
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) fetchRole(session.user.id)
+      else setRole(null)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
+  const fetchRole = async (userId) => {
+    const { data } = await supabase.from('profiles').select('role').eq('id', userId).single()
+    if (data) setRole(data.role)
+  }
+
+  const handleLogin = (userRole) => {
+    setRole(userRole)
+  }
+
   if (!session) {
-    return <Login onLogin={() => {}} />
+    return <Login onLogin={handleLogin} />
+  }
+
+  if (role === 'admin') {
+    return <AdminDashboard onLogout={() => supabase.auth.signOut()} />
   }
 
   const renderContent = () => {

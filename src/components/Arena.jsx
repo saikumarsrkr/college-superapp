@@ -1,14 +1,27 @@
+import { useState, useEffect } from 'react'
 import { Lock } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Arena() {
-  const skills = [
-    { id: 1, name: 'Python', x: 50, y: 20, unlocked: true, connections: [2, 3] },
-    { id: 2, name: 'Data Science', x: 25, y: 45, unlocked: true, connections: [4] },
-    { id: 3, name: 'Web Dev', x: 75, y: 45, unlocked: true, connections: [5] },
-    { id: 4, name: 'ML Basics', x: 15, y: 70, unlocked: false, connections: [6] },
-    { id: 5, name: 'React', x: 85, y: 70, unlocked: false, connections: [6] },
-    { id: 6, name: 'Full Stack AI', x: 50, y: 90, unlocked: false, connections: [] },
-  ]
+  const [skills, setSkills] = useState([])
+
+  useEffect(() => {
+    const fetchSkills = async () => {
+      const { data } = await supabase.from('skills').select('*').order('id', { ascending: true })
+      if (data) {
+        // Map DB data to UI coordinates (mock logic for positioning since DB doesn't have x/y)
+        const enrichedData = data.map((s, i) => ({
+          ...s,
+          x: 20 + (i % 3) * 30, // Simple grid-like positioning
+          y: 20 + Math.floor(i / 3) * 30,
+          unlocked: i < 3, // Unlock first 3 for demo
+          connections: i < data.length - 1 ? [data[i + 1].id] : []
+        }))
+        setSkills(enrichedData)
+      }
+    }
+    fetchSkills()
+  }, [])
 
   const getNodeById = (id) => skills.find(s => s.id === id)
 
@@ -79,7 +92,7 @@ export default function Arena() {
       {/* Progress Stats */}
       <div className="grid grid-cols-2 gap-3">
         <article className="glass p-4">
-          <p className="text-3xl font-bold text-neon-blue">3/6</p>
+          <p className="text-3xl font-bold text-neon-blue">3/{skills.length}</p>
           <p className="text-slate-400 text-sm mt-1">Skills Unlocked</p>
         </article>
         <article className="glass p-4">

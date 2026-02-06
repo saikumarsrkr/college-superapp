@@ -7,12 +7,21 @@ export default function Dashboard() {
   const [profile, setProfile] = useState(null)
 
   useEffect(() => {
-    // Mock data for demo if DB is empty
-    setClasses([
-      { id: 1, name: 'Data Structures', room: 'LH-201', time: '09:00', status: 'verified' },
-      { id: 2, name: 'Machine Learning', room: 'CS-Lab 3', time: '11:00', status: 'ongoing' },
-      { id: 3, name: 'Cybersecurity', room: 'LH-104', time: '14:00', status: 'upcoming' },
-    ])
+    const fetchClasses = async () => {
+      const { data } = await supabase.from('classes').select('*').order('start_time', { ascending: true })
+      if (data && data.length > 0) {
+        // Transform DB data to UI format if needed, or just use as is
+        const formatted = data.map(c => ({
+          id: c.id,
+          name: c.name,
+          room: c.room,
+          time: c.start_time ? c.start_time.slice(0, 5) : '',
+          status: c.status || 'upcoming'
+        }))
+        setClasses(formatted)
+      }
+    }
+    fetchClasses()
     
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
