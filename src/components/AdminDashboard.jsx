@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Plus, Trash, LogOut, Utensils, BookOpen, Trophy } from 'lucide-react'
+import { Plus, Trash, LogOut, Utensils, BookOpen, Trophy, Save, X } from 'lucide-react'
 
 export default function AdminDashboard({ onLogout }) {
   const [activeSection, setActiveSection] = useState('dining')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
   const [newItem, setNewItem] = useState({})
 
   useEffect(() => {
@@ -43,15 +44,15 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure?')) return
+    if (!confirm('Are you sure you want to delete this record?')) return
     let table = ''
     if (activeSection === 'dining') table = 'meals'
     if (activeSection === 'classes') table = 'classes'
     if (activeSection === 'skills') table = 'skills'
 
     const { error } = await supabase.from(table).delete().eq('id', id)
-    if (error) alert('Error deleting')
-    else fetchItems()
+    if (error) alert('Error deleting: ' + error.message)
+    // Realtime will handle refresh
   }
 
   const handleAdd = async (e) => {
@@ -73,188 +74,269 @@ export default function AdminDashboard({ onLogout }) {
     }
 
     const { error } = await supabase.from(table).insert([payload])
-    if (error) alert('Error adding: ' + error.message)
-    else {
+    if (error) {
+      console.error(error)
+      alert('Error adding: ' + error.message)
+    } else {
       setNewItem({})
-      fetchItems()
+      setShowAddModal(false)
+      // Realtime will handle refresh
     }
   }
 
   return (
-    <div className="min-h-screen bg-black relative text-white p-6 pb-24 overflow-hidden">
-      {/* Admin Background Effect */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-80" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:60px_60px] opacity-5" />
+    <div className="min-h-screen bg-black relative text-white p-6 pb-24 overflow-hidden font-sans">
+      {/* Background Ambience */}
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-zinc-800 via-black to-black opacity-40 pointer-events-none" />
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
 
-      <div className="relative z-10 max-w-4xl mx-auto">
-        <header className="flex justify-between items-end mb-10 border-b border-white/5 pb-6">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent tracking-tight">COMMAND CENTER</h1>
-            <p className="text-zinc-500 text-sm font-mono mt-1 tracking-widest">SYSTEM_ADMIN_ACCESS_GRANTED</p>
+      <div className="relative z-10 max-w-6xl mx-auto">
+        {/* Header */}
+        <header className="flex justify-between items-center mb-8 bg-zinc-900/50 backdrop-blur-md border border-white/5 p-4 rounded-2xl">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-red-600 to-orange-500 flex items-center justify-center shadow-lg shadow-red-500/20">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-white">ADMIN CONSOLE</h1>
+              <p className="text-xs text-zinc-500 font-mono tracking-wider">v2.4.0 • SECURE MODE</p>
+            </div>
           </div>
           <button 
             onClick={onLogout} 
-            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all text-xs font-bold uppercase tracking-wider"
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-red-500/10 text-zinc-400 hover:text-red-400 border border-white/5 hover:border-red-500/30 rounded-xl transition-all text-xs font-bold uppercase tracking-wider group"
           >
-            <LogOut size={16} /> Terminate Session
+            <LogOut size={16} className="group-hover:-translate-x-1 transition-transform" /> Sign Out
           </button>
         </header>
 
-        {/* Navigation Tabs */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        {/* Navigation */}
+        <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
           {[
-            { id: 'dining', icon: Utensils, label: 'Mess Menu' },
-            { id: 'classes', icon: BookOpen, label: 'Timetable' },
-            { id: 'skills', icon: Trophy, label: 'Skill Tree' },
-          ].map(({ id, icon: Icon, label }) => (
+            { id: 'dining', icon: Utensils, label: 'Dining Menu', desc: 'Manage meals & timings' },
+            { id: 'classes', icon: BookOpen, label: 'Timetable', desc: 'Schedule classes & labs' },
+            { id: 'skills', icon: Trophy, label: 'Skill Tree', desc: 'Gamification rewards' },
+          ].map(({ id, icon: Icon, label, desc }) => (
             <button
               key={id}
               onClick={() => setActiveSection(id)}
-              className={`flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all duration-300 ${
+              className={`relative flex-1 min-w-[240px] p-5 rounded-2xl border text-left transition-all duration-300 group overflow-hidden ${
                 activeSection === id 
-                  ? 'bg-zinc-900 border-red-500/50 shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)]' 
-                  : 'bg-black border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50 text-zinc-500'
+                  ? 'bg-zinc-900 border-red-500/50 shadow-lg shadow-red-500/10' 
+                  : 'bg-black border-zinc-800 hover:border-zinc-700'
               }`}
             >
-              <Icon size={24} className={activeSection === id ? 'text-red-500' : 'text-zinc-600'} />
-              <span className={`text-sm font-bold uppercase tracking-wider ${activeSection === id ? 'text-white' : 'text-zinc-500'}`}>
-                {label}
-              </span>
+              <div className={`absolute top-0 right-0 p-4 opacity-10 transition-transform duration-500 ${activeSection === id ? 'scale-110 rotate-12 text-red-500' : 'scale-100 rotate-0 text-white'}`}>
+                <Icon size={80} />
+              </div>
+              <div className="relative z-10">
+                <Icon size={24} className={`mb-3 ${activeSection === id ? 'text-red-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+                <h3 className={`text-lg font-bold ${activeSection === id ? 'text-white' : 'text-zinc-400 group-hover:text-white'}`}>{label}</h3>
+                <p className="text-xs text-zinc-600 mt-1">{desc}</p>
+              </div>
             </button>
           ))}
         </div>
 
-        {/* Management Interface */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        {/* Main Content Area */}
+        <div className="grid lg:grid-cols-12 gap-6">
           
-          {/* Create Form */}
-          <div className="lg:col-span-1">
-            <div className="bg-zinc-900/50 backdrop-blur border border-zinc-800 rounded-2xl p-6 sticky top-6">
-              <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-6 flex items-center gap-2">
-                <Plus size={16} className="text-red-500" /> New Entry
-              </h3>
-              
-              <form onSubmit={handleAdd} className="space-y-4">
-                {activeSection === 'dining' && (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Meal Name</label>
-                      <input placeholder="e.g. Lunch" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Menu Items</label>
-                      <textarea placeholder="e.g. Rice, Dal, Paneer" value={newItem.items || ''} onChange={e => setNewItem({...newItem, items: e.target.value})} className="input-field min-h-[80px]" required />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Time</label>
-                      <input type="time" value={newItem.served_at || ''} onChange={e => setNewItem({...newItem, served_at: e.target.value})} className="input-field" />
-                    </div>
-                  </>
-                )}
-
-                {activeSection === 'classes' && (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Course Code</label>
-                      <input placeholder="e.g. CS-101" value={newItem.code || ''} onChange={e => setNewItem({...newItem, code: e.target.value})} className="input-field" required />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Course Name</label>
-                      <input placeholder="e.g. Intro to AI" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-zinc-500 font-bold uppercase">Room</label>
-                        <input placeholder="304" value={newItem.room || ''} onChange={e => setNewItem({...newItem, room: e.target.value})} className="input-field" />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-zinc-500 font-bold uppercase">Time</label>
-                        <input type="time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} className="input-field" />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {activeSection === 'skills' && (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Skill Name</label>
-                      <input placeholder="e.g. Python" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Category</label>
-                      <input placeholder="e.g. Tech" value={newItem.category || ''} onChange={e => setNewItem({...newItem, category: e.target.value})} className="input-field" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] text-zinc-500 font-bold uppercase">XP Reward</label>
-                      <input type="number" placeholder="100" value={newItem.xp_reward || ''} onChange={e => setNewItem({...newItem, xp_reward: e.target.value})} className="input-field" />
-                    </div>
-                  </>
-                )}
-
-                <button type="submit" className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition-colors mt-4 text-xs uppercase tracking-wide">
-                  Deploy to Database
+          {/* List Section */}
+          <div className="lg:col-span-12">
+            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl overflow-hidden backdrop-blur-sm">
+              <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-900/50">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <span className="w-2 h-6 bg-red-500 rounded-full" />
+                  {activeSection.toUpperCase()} DATABASE
+                </h2>
+                <button 
+                  onClick={() => setShowAddModal(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors shadow-lg shadow-white/5"
+                >
+                  <Plus size={18} /> Add New
                 </button>
-              </form>
-            </div>
-          </div>
-
-          {/* Database List */}
-          <div className="lg:col-span-2">
-            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-6 min-h-[600px]">
-              <div className="flex justify-between items-center mb-6">
-                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Live Database Records</h3>
-                <span className="text-xs font-mono text-zinc-600">{items.length} records found</span>
               </div>
 
-              {loading ? (
-                <div className="flex flex-col items-center justify-center h-40 text-zinc-500">
-                  <div className="w-6 h-6 border-2 border-zinc-700 border-t-red-500 rounded-full animate-spin mb-3"></div>
-                  <p className="text-xs font-mono">SYNCING...</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {items.map(item => (
-                    <div key={item.id} className="group flex justify-between items-center p-4 bg-black border border-zinc-800 rounded-xl hover:border-red-500/30 transition-all">
-                      <div>
-                        <h4 className="font-bold text-white text-sm">{item.name || item.title}</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] font-mono text-zinc-500 px-2 py-0.5 bg-zinc-900 rounded border border-zinc-800">
+              <div className="p-6">
+                {loading ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
+                    <div className="w-8 h-8 border-4 border-zinc-800 border-t-red-500 rounded-full animate-spin mb-4" />
+                    <p className="text-xs font-mono tracking-widest">SYNCHRONIZING DATA...</p>
+                  </div>
+                ) : items.length === 0 ? (
+                  <div className="text-center py-20 border-2 border-dashed border-zinc-800 rounded-xl bg-black/20">
+                    <p className="text-zinc-500 font-medium">No records found in this sector.</p>
+                    <button onClick={() => setShowAddModal(true)} className="text-red-500 text-sm font-bold mt-2 hover:underline">Create first entry</button>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {/* Header Row */}
+                    <div className="grid grid-cols-12 gap-4 px-4 py-2 text-xs font-bold text-zinc-500 uppercase tracking-wider border-b border-white/5">
+                      <div className="col-span-4">Primary Info</div>
+                      <div className="col-span-5">Details</div>
+                      <div className="col-span-2">Meta</div>
+                      <div className="col-span-1 text-right">Action</div>
+                    </div>
+                    
+                    {items.map(item => (
+                      <div key={item.id} className="grid grid-cols-12 gap-4 items-center p-4 bg-black/40 border border-zinc-800 rounded-xl hover:border-zinc-600 hover:bg-zinc-900/40 transition-all group">
+                        
+                        {/* Column 1: Primary Info */}
+                        <div className="col-span-4">
+                          <h4 className="font-bold text-white text-base">{item.name || item.title}</h4>
+                          <span className="text-[10px] font-mono text-zinc-600 bg-black px-1.5 py-0.5 rounded border border-zinc-800 mt-1 inline-block">
                             ID: {item.id.toString().slice(0,8)}
                           </span>
-                          <p className="text-xs text-zinc-400 truncate max-w-[200px]">
-                            {activeSection === 'dining' && item.items}
-                            {activeSection === 'classes' && `${item.code} • ${item.room}`}
-                            {activeSection === 'skills' && `${item.category} • ${item.xp_reward} XP`}
-                          </p>
+                        </div>
+
+                        {/* Column 2: Details */}
+                        <div className="col-span-5 text-sm text-zinc-400">
+                           {activeSection === 'dining' && (
+                             <div>
+                               <span className="text-zinc-500 block text-xs mb-0.5">Menu</span>
+                               {item.items}
+                             </div>
+                           )}
+                           {activeSection === 'classes' && (
+                             <div className="flex gap-4">
+                               <div>
+                                 <span className="text-zinc-500 block text-xs mb-0.5">Code</span>
+                                 <span className="font-mono text-white bg-zinc-800/50 px-2 py-0.5 rounded">{item.code}</span>
+                               </div>
+                               <div>
+                                 <span className="text-zinc-500 block text-xs mb-0.5">Room</span>
+                                 {item.room}
+                               </div>
+                             </div>
+                           )}
+                           {activeSection === 'skills' && (
+                             <div>
+                               <span className="text-zinc-500 block text-xs mb-0.5">Category</span>
+                               <span className="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-xs border border-blue-500/20">{item.category}</span>
+                             </div>
+                           )}
+                        </div>
+
+                        {/* Column 3: Meta */}
+                        <div className="col-span-2 text-sm">
+                          {activeSection === 'dining' && (
+                            <div className="flex items-center gap-1.5 text-orange-400">
+                              <ClockIcon size={14} /> {item.served_at?.slice(0,5)}
+                            </div>
+                          )}
+                          {activeSection === 'classes' && (
+                             <div className="flex items-center gap-1.5 text-green-400">
+                               <ClockIcon size={14} /> {item.start_time?.slice(0,5)}
+                             </div>
+                          )}
+                          {activeSection === 'skills' && (
+                            <div className="flex items-center gap-1.5 text-yellow-400 font-bold font-mono">
+                              +{item.xp_reward} XP
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Column 4: Action */}
+                        <div className="col-span-1 text-right">
+                          <button 
+                            onClick={() => handleDelete(item.id)} 
+                            className="p-2 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                            title="Delete Record"
+                          >
+                            <Trash size={18} />
+                          </button>
                         </div>
                       </div>
-                      <button 
-                        onClick={() => handleDelete(item.id)} 
-                        className="p-2 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <Trash size={18} />
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {items.length === 0 && (
-                    <div className="text-center py-10 border-2 border-dashed border-zinc-800 rounded-xl">
-                      <p className="text-zinc-600 text-sm">Database is empty.</p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <style jsx>{`
-        .input-field {
-          @apply w-full bg-black border border-zinc-800 rounded-lg px-3 py-2.5 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none transition-all placeholder:text-zinc-700 font-mono;
-        }
-      `}</style>
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-zinc-900 border border-zinc-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up">
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-zinc-800/50">
+              <h3 className="font-bold text-white flex items-center gap-2">
+                <Plus size={18} className="text-green-500" /> New {activeSection} Entry
+              </h3>
+              <button onClick={() => setShowAddModal(false)} className="text-zinc-500 hover:text-white transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAdd} className="p-6 space-y-4">
+              {activeSection === 'dining' && (
+                <>
+                  <InputGroup label="Meal Name" placeholder="e.g. Lunch" value={newItem.name} onChange={v => setNewItem({...newItem, name: v})} required />
+                  <InputGroup label="Menu Items" placeholder="e.g. Rice, Dal, Paneer" value={newItem.items} onChange={v => setNewItem({...newItem, items: v})} required textarea />
+                  <InputGroup label="Serving Time" type="time" value={newItem.served_at} onChange={v => setNewItem({...newItem, served_at: v})} />
+                </>
+              )}
+              {activeSection === 'classes' && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <InputGroup label="Course Code" placeholder="e.g. CS-101" value={newItem.code} onChange={v => setNewItem({...newItem, code: v})} required />
+                    <InputGroup label="Room No." placeholder="e.g. 304" value={newItem.room} onChange={v => setNewItem({...newItem, room: v})} />
+                  </div>
+                  <InputGroup label="Course Name" placeholder="e.g. Intro to AI" value={newItem.name} onChange={v => setNewItem({...newItem, name: v})} required />
+                  <InputGroup label="Start Time" type="time" value={newItem.start_time} onChange={v => setNewItem({...newItem, start_time: v})} />
+                </>
+              )}
+              {activeSection === 'skills' && (
+                <>
+                  <InputGroup label="Skill Name" placeholder="e.g. Python" value={newItem.name} onChange={v => setNewItem({...newItem, name: v})} required />
+                  <div className="grid grid-cols-2 gap-4">
+                    <InputGroup label="Category" placeholder="e.g. Tech" value={newItem.category} onChange={v => setNewItem({...newItem, category: v})} />
+                    <InputGroup label="XP Reward" type="number" placeholder="100" value={newItem.xp_reward} onChange={v => setNewItem({...newItem, xp_reward: v})} />
+                  </div>
+                </>
+              )}
+
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 py-3 bg-green-600 text-black font-bold rounded-xl hover:bg-green-500 transition-colors flex items-center justify-center gap-2">
+                  <Save size={18} /> Save Record
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
+const InputGroup = ({ label, type = 'text', placeholder, value, onChange, required, textarea }) => (
+  <div className="space-y-1.5">
+    <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider ml-1">{label}</label>
+    {textarea ? (
+      <textarea 
+        placeholder={placeholder} 
+        value={value || ''} 
+        onChange={e => onChange(e.target.value)} 
+        className="input-field min-h-[80px]" 
+        required={required} 
+      />
+    ) : (
+      <input 
+        type={type} 
+        placeholder={placeholder} 
+        value={value || ''} 
+        onChange={e => onChange(e.target.value)} 
+        className="input-field" 
+        required={required} 
+      />
+    )}
+  </div>
+)
+
+const ClockIcon = ({ size, className }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+)
