@@ -56,9 +56,33 @@ on profiles for update
 to authenticated
 using (auth.uid() = id);
 
+-- Users can insert their own profile (required for sign-up)
+create policy "Users can insert own profile"
+on profiles for insert
+to authenticated
+with check (auth.uid() = id);
+
 -- Admins can do everything on profiles
 create policy "Admins can manage all profiles"
 on profiles for all
 using (
   auth.uid() in (select id from profiles where role = 'admin')
 );
+
+-- 6. AUTO-PROFILE CREATION (Trigger)
+-- Automatically create a profile when a new user signs up
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id, email, full_name, role)
+  values (new.id, new.email, new.raw_user_meta_data->>'full_name', 'student');
+  return new;
+end;
+$$ language plpgsql security definer;
+
+-- Drop trigger if exists to avoid conflicts on reset
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row
+  execute procedure public.handle_new_user();
