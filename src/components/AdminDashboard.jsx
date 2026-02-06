@@ -64,100 +64,178 @@ export default function AdminDashboard({ onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-6 pb-24">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-neon-blue">Admin Command</h1>
-          <p className="text-slate-400 text-sm">System Override Enabled</p>
-        </div>
-        <button onClick={onLogout} className="p-2 bg-red-500/20 text-red-500 rounded-lg">
-          <LogOut size={20} />
-        </button>
-      </div>
+    <div className="min-h-screen bg-black relative text-white p-6 pb-24 overflow-hidden">
+      {/* Admin Background Effect */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-black to-black opacity-80" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:60px_60px] opacity-5" />
 
-      {/* Tabs */}
-      <div className="flex gap-4 mb-8 overflow-x-auto">
-        <button
-          onClick={() => setActiveSection('dining')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all ${
-            activeSection === 'dining' ? 'bg-neon-blue text-black font-bold' : 'glass text-slate-400'
-          }`}
-        >
-          <Utensils size={18} /> Dining
-        </button>
-        <button
-          onClick={() => setActiveSection('classes')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all ${
-            activeSection === 'classes' ? 'bg-neon-blue text-black font-bold' : 'glass text-slate-400'
-          }`}
-        >
-          <BookOpen size={18} /> Classes
-        </button>
-        <button
-          onClick={() => setActiveSection('skills')}
-          className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-all ${
-            activeSection === 'skills' ? 'bg-neon-blue text-black font-bold' : 'glass text-slate-400'
-          }`}
-        >
-          <Trophy size={18} /> Skills
-        </button>
-      </div>
-
-      {/* Add New Form */}
-      <form onSubmit={handleAdd} className="glass p-6 mb-8 border border-white/10">
-        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-          <Plus size={18} className="text-neon-green" /> Add New {activeSection}
-        </h3>
-        <div className="grid gap-4">
-          {activeSection === 'dining' && (
-            <>
-              <input placeholder="Meal Name (e.g. Lunch)" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
-              <input placeholder="Items (e.g. Rice, Dal)" value={newItem.items || ''} onChange={e => setNewItem({...newItem, items: e.target.value})} className="input-field" required />
-              <input type="time" value={newItem.served_at || ''} onChange={e => setNewItem({...newItem, served_at: e.target.value})} className="input-field" />
-            </>
-          )}
-          {activeSection === 'classes' && (
-            <>
-              <input placeholder="Code (e.g. CS-101)" value={newItem.code || ''} onChange={e => setNewItem({...newItem, code: e.target.value})} className="input-field" required />
-              <input placeholder="Name (e.g. Intro to AI)" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
-              <input placeholder="Room (e.g. 304)" value={newItem.room || ''} onChange={e => setNewItem({...newItem, room: e.target.value})} className="input-field" />
-            </>
-          )}
-          {activeSection === 'skills' && (
-            <>
-              <input placeholder="Skill Name" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
-              <input placeholder="Category" value={newItem.category || ''} onChange={e => setNewItem({...newItem, category: e.target.value})} className="input-field" />
-              <input type="number" placeholder="XP Reward" value={newItem.xp_reward || ''} onChange={e => setNewItem({...newItem, xp_reward: e.target.value})} className="input-field" />
-            </>
-          )}
-          <button type="submit" className="bg-neon-green text-black font-bold py-3 rounded-xl mt-2">
-            Add to Database
-          </button>
-        </div>
-      </form>
-
-      {/* List */}
-      <div className="space-y-4">
-        {loading ? <p className="text-slate-500 text-center">Loading data...</p> : items.map(item => (
-          <div key={item.id} className="glass p-4 flex justify-between items-center">
-            <div>
-              <h4 className="font-bold text-white">{item.name || item.title}</h4>
-              <p className="text-xs text-slate-400">
-                {activeSection === 'dining' && item.items}
-                {activeSection === 'classes' && `${item.code} | ${item.room}`}
-                {activeSection === 'skills' && `${item.category} | ${item.xp_reward} XP`}
-              </p>
-            </div>
-            <button onClick={() => handleDelete(item.id)} className="p-2 text-red-400 hover:text-red-300">
-              <Trash size={18} />
-            </button>
+      <div className="relative z-10 max-w-4xl mx-auto">
+        <header className="flex justify-between items-end mb-10 border-b border-white/5 pb-6">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-red-500 to-orange-500 bg-clip-text text-transparent tracking-tight">COMMAND CENTER</h1>
+            <p className="text-zinc-500 text-sm font-mono mt-1 tracking-widest">SYSTEM_ADMIN_ACCESS_GRANTED</p>
           </div>
-        ))}
+          <button 
+            onClick={onLogout} 
+            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg transition-all text-xs font-bold uppercase tracking-wider"
+          >
+            <LogOut size={16} /> Terminate Session
+          </button>
+        </header>
+
+        {/* Navigation Tabs */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          {[
+            { id: 'dining', icon: Utensils, label: 'Mess Menu' },
+            { id: 'classes', icon: BookOpen, label: 'Timetable' },
+            { id: 'skills', icon: Trophy, label: 'Skill Tree' },
+          ].map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveSection(id)}
+              className={`flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all duration-300 ${
+                activeSection === id 
+                  ? 'bg-zinc-900 border-red-500/50 shadow-[0_0_30px_-5px_rgba(239,68,68,0.3)]' 
+                  : 'bg-black border-zinc-800 hover:border-zinc-700 hover:bg-zinc-900/50 text-zinc-500'
+              }`}
+            >
+              <Icon size={24} className={activeSection === id ? 'text-red-500' : 'text-zinc-600'} />
+              <span className={`text-sm font-bold uppercase tracking-wider ${activeSection === id ? 'text-white' : 'text-zinc-500'}`}>
+                {label}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Management Interface */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          
+          {/* Create Form */}
+          <div className="lg:col-span-1">
+            <div className="bg-zinc-900/50 backdrop-blur border border-zinc-800 rounded-2xl p-6 sticky top-6">
+              <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider mb-6 flex items-center gap-2">
+                <Plus size={16} className="text-red-500" /> New Entry
+              </h3>
+              
+              <form onSubmit={handleAdd} className="space-y-4">
+                {activeSection === 'dining' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Meal Name</label>
+                      <input placeholder="e.g. Lunch" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Menu Items</label>
+                      <textarea placeholder="e.g. Rice, Dal, Paneer" value={newItem.items || ''} onChange={e => setNewItem({...newItem, items: e.target.value})} className="input-field min-h-[80px]" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Time</label>
+                      <input type="time" value={newItem.served_at || ''} onChange={e => setNewItem({...newItem, served_at: e.target.value})} className="input-field" />
+                    </div>
+                  </>
+                )}
+
+                {activeSection === 'classes' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Course Code</label>
+                      <input placeholder="e.g. CS-101" value={newItem.code || ''} onChange={e => setNewItem({...newItem, code: e.target.value})} className="input-field" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Course Name</label>
+                      <input placeholder="e.g. Intro to AI" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-zinc-500 font-bold uppercase">Room</label>
+                        <input placeholder="304" value={newItem.room || ''} onChange={e => setNewItem({...newItem, room: e.target.value})} className="input-field" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-zinc-500 font-bold uppercase">Time</label>
+                        <input type="time" value={newItem.start_time || ''} onChange={e => setNewItem({...newItem, start_time: e.target.value})} className="input-field" />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeSection === 'skills' && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Skill Name</label>
+                      <input placeholder="e.g. Python" value={newItem.name || ''} onChange={e => setNewItem({...newItem, name: e.target.value})} className="input-field" required />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">Category</label>
+                      <input placeholder="e.g. Tech" value={newItem.category || ''} onChange={e => setNewItem({...newItem, category: e.target.value})} className="input-field" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-zinc-500 font-bold uppercase">XP Reward</label>
+                      <input type="number" placeholder="100" value={newItem.xp_reward || ''} onChange={e => setNewItem({...newItem, xp_reward: e.target.value})} className="input-field" />
+                    </div>
+                  </>
+                )}
+
+                <button type="submit" className="w-full py-3 bg-white text-black font-bold rounded-lg hover:bg-zinc-200 transition-colors mt-4 text-xs uppercase tracking-wide">
+                  Deploy to Database
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* Database List */}
+          <div className="lg:col-span-2">
+            <div className="bg-zinc-900/30 border border-zinc-800/50 rounded-2xl p-6 min-h-[600px]">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-bold text-zinc-400 uppercase tracking-wider">Live Database Records</h3>
+                <span className="text-xs font-mono text-zinc-600">{items.length} records found</span>
+              </div>
+
+              {loading ? (
+                <div className="flex flex-col items-center justify-center h-40 text-zinc-500">
+                  <div className="w-6 h-6 border-2 border-zinc-700 border-t-red-500 rounded-full animate-spin mb-3"></div>
+                  <p className="text-xs font-mono">SYNCING...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {items.map(item => (
+                    <div key={item.id} className="group flex justify-between items-center p-4 bg-black border border-zinc-800 rounded-xl hover:border-red-500/30 transition-all">
+                      <div>
+                        <h4 className="font-bold text-white text-sm">{item.name || item.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] font-mono text-zinc-500 px-2 py-0.5 bg-zinc-900 rounded border border-zinc-800">
+                            ID: {item.id.toString().slice(0,8)}
+                          </span>
+                          <p className="text-xs text-zinc-400 truncate max-w-[200px]">
+                            {activeSection === 'dining' && item.items}
+                            {activeSection === 'classes' && `${item.code} • ${item.room}`}
+                            {activeSection === 'skills' && `${item.category} • ${item.xp_reward} XP`}
+                          </p>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => handleDelete(item.id)} 
+                        className="p-2 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {items.length === 0 && (
+                    <div className="text-center py-10 border-2 border-dashed border-zinc-800 rounded-xl">
+                      <p className="text-zinc-600 text-sm">Database is empty.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
         .input-field {
-          @apply w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-sm focus:border-neon-blue outline-none;
+          @apply w-full bg-black border border-zinc-800 rounded-lg px-3 py-2.5 text-white text-sm focus:border-red-500 focus:ring-1 focus:ring-red-500/20 outline-none transition-all placeholder:text-zinc-700 font-mono;
         }
       `}</style>
     </div>
