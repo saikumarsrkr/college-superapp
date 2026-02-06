@@ -54,8 +54,18 @@ function App() {
   if (isAdminContext) {
     // Not logged in -> Show Admin Login
     if (!session) {
-      return <AdminLogin onLogin={() => {}} /> // Role check handled inside AdminLogin
+      return <AdminLogin onLogin={handleLogin} /> // Role check handled inside AdminLogin
     }
+
+    // Still loading role -> Show loading state
+    if (role === null) {
+      return (
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-zinc-800 border-t-red-500 rounded-full animate-spin" />
+        </div>
+      )
+    }
+
     // Logged in but not admin -> Show Access Denied or Sign Out
     if (role && role !== 'admin') {
       return (
