@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">College SuperApp</string>
+    <string name="title_activity_main">College SuperApp</string>
+    <string name="package_name">com.college.superapp</string>
+    <string name="custom_url_scheme">com.college.superapp</string>
+</resources>
