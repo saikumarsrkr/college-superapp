@@ -5,22 +5,36 @@ import { supabase } from '../lib/supabase'
 export default function Dashboard() {
   const [classes, setClasses] = useState([])
   const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchClasses = async () => {
-      const { data } = await supabase.from('classes').select('*').order('start_time', { ascending: true })
-      if (data) {
-        // Transform DB data to UI format
-        const formatted = data.map(c => ({
-          id: c.id,
-          name: c.name,
-          room: c.room,
-          time: c.start_time ? c.start_time.slice(0, 5) : '',
-          status: c.status || 'upcoming'
-        }))
-        setClasses(formatted)
+      try {
+        const { data, error } = await supabase.from('classes').select('*').order('start_time', { ascending: true })
+        
+        if (error) {
+          console.error('Error fetching classes:', error)
+          return
+        }
+
+        if (data) {
+          // Transform DB data to UI format
+          const formatted = data.map(c => ({
+            id: c.id,
+            name: c.name,
+            room: c.room,
+            time: c.start_time ? c.start_time.slice(0, 5) : '',
+            status: c.status || 'upcoming'
+          }))
+          setClasses(formatted)
+        }
+      } catch (err) {
+        console.error('Unexpected error:', err)
+      } finally {
+        setLoading(false)
       }
     }
+
     fetchClasses()
     
     // Real-time subscription
@@ -31,12 +45,15 @@ export default function Dashboard() {
       })
       .subscribe()
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    // Fetch user profile
+    const fetchProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        supabase.from('profiles').select('*').eq('id', user.id).single()
-          .then(({ data }) => setProfile(data))
+        const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+        setProfile(data)
       }
-    })
+    }
+    fetchProfile()
 
     return () => {
       supabase.removeChannel(subscription)
@@ -127,24 +144,30 @@ export default function Dashboard() {
       <section>
         <h2 className="text-lg font-semibold text-white mb-4 px-2">Up Next</h2>
         <div className="space-y-3">
-          {classes.map((cls) => (
-            <div key={cls.id} className="glass-panel p-4 flex items-center justify-between group active:scale-98 transition-transform">
-              <div className="flex items-center gap-4">
-                <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white/5 text-slate-300 group-hover:bg-white/10 transition-colors">
-                  <span className="text-sm font-bold">{cls.time}</span>
+          {loading ? (
+            <div className="text-center text-slate-500 py-4">Loading classes...</div>
+          ) : classes.length === 0 ? (
+            <div className="text-center text-slate-500 py-4">No classes scheduled.</div>
+          ) : (
+            classes.map((cls) => (
+              <div key={cls.id} className="glass-panel p-4 flex items-center justify-between group active:scale-98 transition-transform">
+                <div className="flex items-center gap-4">
+                  <div className="flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-white/5 text-slate-300 group-hover:bg-white/10 transition-colors">
+                    <span className="text-sm font-bold">{cls.time}</span>
+                  </div>
+                  <div>
+                    <h4 className="text-white font-medium">{cls.name}</h4>
+                    <p className="text-xs text-slate-500">{cls.room}</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="text-white font-medium">{cls.name}</h4>
-                  <p className="text-xs text-slate-500">{cls.room}</p>
-                </div>
+                {cls.status === 'verified' ? (
+                  <Check className="text-neon-green" size={20} />
+                ) : (
+                  <Clock className="text-slate-600" size={20} />
+                )}
               </div>
-              {cls.status === 'verified' ? (
-                <Check className="text-neon-green" size={20} />
-              ) : (
-                <Clock className="text-slate-600" size={20} />
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </section>
     </div>
