@@ -8,6 +8,7 @@ import Arena from './components/Arena'
 import Dining from './components/Dining'
 import Vault from './components/Vault'
 import Login from './components/Login'
+import AdminLogin from './components/AdminLogin'
 import AdminDashboard from './components/AdminDashboard'
 import { supabase } from './lib/supabase'
 
@@ -16,8 +17,18 @@ function App() {
   const [role, setRole] = useState(null)
   const [activeTab, setActiveTab] = useState('home')
   const [ghostMode, setGhostMode] = useState(false)
+  
+  // URL-based routing for Admin Login
+  const [isAdminRoute, setIsAdminRoute] = useState(window.location.pathname === '/admin')
 
   useEffect(() => {
+    // Listen for URL changes
+    const handleLocationChange = () => {
+      setIsAdminRoute(window.location.pathname === '/admin')
+    }
+    window.addEventListener('popstate', handleLocationChange)
+    
+    // Auth logic
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) fetchRole(session.user.id)
@@ -31,7 +42,10 @@ function App() {
       else setRole(null)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange)
+      subscription.unsubscribe()
+    }
   }, [])
 
   const fetchRole = async (userId) => {
@@ -43,12 +57,20 @@ function App() {
     setRole(userRole)
   }
 
+  // Admin Route Handler
+  if (isAdminRoute && !session) {
+    return <AdminLogin onLogin={handleLogin} />
+  }
+
   if (!session) {
     return <Login onLogin={handleLogin} />
   }
 
   if (role === 'admin') {
-    return <AdminDashboard onLogout={() => supabase.auth.signOut()} />
+    return <AdminDashboard onLogout={() => {
+      supabase.auth.signOut()
+      window.location.href = '/'
+    }} />
   }
 
   const renderContent = () => {
