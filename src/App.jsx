@@ -155,7 +155,7 @@ function App() {
         setGhostMode={setGhostMode}
         toggleChat={() => setIsChatOpen(prev => !prev)}
       />
-      <main className="pt-20 px-4">
+      <main className="pt-28 px-4">
         {renderContent()}
       </main>
       <ChatSystem session={session} isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
