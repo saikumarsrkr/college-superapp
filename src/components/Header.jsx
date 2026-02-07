@@ -1,6 +1,6 @@
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, MessageCircle } from 'lucide-react'
 
-export default function Header({ ghostMode, setGhostMode }) {
+export default function Header({ ghostMode, setGhostMode, toggleChat }) {
   const attendance = 87
   const xp = 2450
   const studentName = "Arjun Kumar"
@@ -34,7 +34,16 @@ export default function Header({ ghostMode, setGhostMode }) {
           </div>
         </div>
 
-        {/* Ghost Mode Toggle */}
+        <div className="flex items-center gap-2">
+          {/* Chat Toggle */}
+          <button
+            onClick={toggleChat}
+            className="p-2.5 bg-white/5 text-slate-400 hover:text-neon-blue hover:bg-neon-blue/10 rounded-xl transition-all"
+          >
+            <MessageCircle size={20} />
+          </button>
+
+          {/* Ghost Mode Toggle */}
         <button
           onClick={() => setGhostMode(!ghostMode)}
           className={`flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${

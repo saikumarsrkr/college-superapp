@@ -31,6 +31,7 @@ function App() {
   const [role, setRole] = useState(null)
   const [activeTab, setActiveTab] = useState('home')
   const [ghostMode, setGhostMode] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(false)
   
   // Determine context based on Subdomain OR Path (for localhost testing)
   const hostname = window.location.hostname
@@ -151,12 +152,13 @@ function App() {
       {/* Only show Header on Home to reduce clutter, or make it dynamic. For now, keep it global. */}
       <Header 
         ghostMode={ghostMode} 
-        setGhostMode={setGhostMode} 
+        setGhostMode={setGhostMode}
+        toggleChat={() => setIsChatOpen(prev => !prev)}
       />
       <main className="pt-20 px-4">
         {renderContent()}
       </main>
-      <ChatSystem session={session} />
+      <ChatSystem session={session} isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   )
