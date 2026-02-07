@@ -1,36 +1,36 @@
+import { useState, useEffect } from 'react'
 import { Clock, AlertTriangle, CheckCircle, Timer } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Governance({ ghostMode }) {
-  const tickets = [
-    { 
-      id: 'TKT-001', 
-      title: 'Library AC not working', 
-      status: 'resolved', 
-      sla: 'Completed in 2 days',
-      department: 'Facilities'
-    },
-    { 
-      id: 'TKT-002', 
-      title: 'Hostel water pressure issue', 
-      status: 'in-progress', 
-      sla: '18h remaining',
-      department: 'Maintenance'
-    },
-    { 
-      id: 'TKT-003', 
-      title: 'Lab computer malfunction', 
-      status: 'pending', 
-      sla: '36h remaining',
-      department: 'IT Support'
-    },
-    { 
-      id: 'TKT-004', 
-      title: 'Cafeteria hygiene complaint', 
-      status: 'overdue', 
-      sla: 'Overdue by 12h',
-      department: 'Health & Safety'
-    },
-  ]
+  const [tickets, setTickets] = useState([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const fetchTickets = async () => {
+      setLoading(true)
+      const { data } = await supabase
+        .from('tickets')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (data) setTickets(data)
+      setLoading(false)
+    }
+    fetchTickets()
+    
+    // Realtime subscription
+    const subscription = supabase
+      .channel('tickets-channel')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
+        fetchTickets()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(subscription)
+    }
+  }, [])
 
   const getStatusConfig = (status) => {
     switch (status) {
@@ -47,6 +47,7 @@ export default function Governance({ ghostMode }) {
           border: 'border-neon-blue/30'
         }
       case 'pending':
+      case 'open':
         return { 
           color: 'bg-neon-gold/20 text-neon-gold', 
           icon: Clock,
@@ -67,6 +68,18 @@ export default function Governance({ ghostMode }) {
     }
   }
 
+  const formatSLA = (dueDate, status) => {
+    if (status === 'resolved') return 'Resolved'
+    if (!dueDate) return 'No SLA'
+    
+    const due = new Date(dueDate)
+    const now = new Date()
+    const diffHours = Math.floor((due - now) / (1000 * 60 * 60))
+    
+    if (diffHours < 0) return `Overdue by ${Math.abs(diffHours)}h`
+    return `${diffHours}h remaining`
+  }
+
   const responseData = [
     { label: 'Mon', value: 85 },
     { label: 'Tue', value: 72 },
@@ -84,10 +97,13 @@ export default function Governance({ ghostMode }) {
 
       {/* Ticket List */}
       <div className="space-y-3">
-        {tickets.map((ticket) => {
+        {loading && <p className="text-slate-500 text-xs text-center">Loading tickets...</p>}
+        
+        {!loading && tickets.map((ticket) => {
           const config = getStatusConfig(ticket.status)
           const Icon = config.icon
-          const isOverdue = ticket.status === 'overdue'
+          const slaText = formatSLA(ticket.sla_due_at, ticket.status)
+          const isOverdue = slaText.includes('Overdue')
 
           return (
             <article
@@ -97,7 +113,7 @@ export default function Governance({ ghostMode }) {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <p className={`text-xs font-mono text-slate-500 ${ghostMode ? 'ghost-blur' : ''}`}>
-                    {ticket.id}
+                    {ticket.id.slice(0, 8)}
                   </p>
                   <h3 className="text-white font-medium mt-1">{ticket.title}</h3>
                 </div>
@@ -107,9 +123,9 @@ export default function Governance({ ghostMode }) {
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-500">{ticket.department}</span>
+                <span className="text-slate-500">{ticket.department || ticket.category}</span>
                 <span className={isOverdue ? 'text-neon-red' : 'text-slate-400'}>
-                  {ticket.sla}
+                  {slaText}
                 </span>
               </div>
             </article>
