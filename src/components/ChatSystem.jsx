@@ -69,10 +69,12 @@ export default function ChatSystem({ session }) {
 
   // 3. Chat Messages & Subscription
   useEffect(() => {
+    let channel
+
     if (activeChat) {
       fetchMessages(activeChat.id)
 
-      const channel = supabase
+      channel = supabase
         .channel(`chat:${activeChat.id}`)
         .on('postgres_changes', { 
           event: 'INSERT', 
@@ -97,10 +99,10 @@ export default function ChatSystem({ session }) {
           }
         })
         .subscribe()
+    }
 
-      return () => {
-        supabase.removeChannel(channel)
-      }
+    return () => {
+      if (channel) supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChat])
