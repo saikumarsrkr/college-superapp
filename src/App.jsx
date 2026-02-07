@@ -10,6 +10,7 @@ import Vault from './components/Vault'
 import Login from './components/Login'
 import AdminLogin from './components/AdminLogin'
 import AdminDashboard from './components/AdminDashboard'
+import ChatSystem from './components/ChatSystem'
 import { supabase } from './lib/supabase'
 
 /**
@@ -151,6 +152,7 @@ function App() {
       <main className="pt-20 px-4">
         {renderContent()}
       </main>
+      <ChatSystem session={session} />
       <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
     </div>
   )
