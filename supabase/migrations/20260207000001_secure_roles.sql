@@ -25,7 +25,7 @@ begin
   end if;
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public, pg_temp;
 
 -- Trigger
 drop trigger if exists on_profile_update on profiles;
