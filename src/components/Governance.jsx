@@ -21,6 +21,9 @@ export default function Governance({ ghostMode }) {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    /**
+     * Loads tickets from Supabase and sets up a realtime listener.
+     */
     const fetchTickets = async () => {
       setLoading(true)
       const { data } = await supabase
@@ -46,6 +49,10 @@ export default function Governance({ ghostMode }) {
     }
   }, [])
 
+  /**
+   * Returns UI configuration (color, icon, border) based on ticket status.
+   * @param {string} status - Ticket status (resolved, in-progress, etc.)
+   */
   const getStatusConfig = (status) => {
     switch (status) {
       case 'resolved':
@@ -82,6 +89,11 @@ export default function Governance({ ghostMode }) {
     }
   }
 
+  /**
+   * Formats the Service Level Agreement (SLA) time remaining.
+   * @param {string} dueDate - ISO date string of due time.
+   * @param {string} status - Current status of the ticket.
+   */
   const formatSLA = (dueDate, status) => {
     if (status === 'resolved') return 'Resolved'
     if (!dueDate) return 'No SLA'

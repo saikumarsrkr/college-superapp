@@ -26,6 +26,9 @@ export default function Vault({ ghostMode }) {
     fetchDocuments()
   }, [])
 
+  /**
+   * Fetches the user's documents from the database.
+   */
   const fetchDocuments = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -39,6 +42,11 @@ export default function Vault({ ghostMode }) {
     if (data) setDocuments(data)
   }
 
+  /**
+   * Handles file upload process:
+   * 1. Uploads binary to Supabase Storage (bucket: 'vault').
+   * 2. Inserts metadata record into 'documents' table.
+   */
   const handleUpload = async (e) => {
     e.preventDefault()
     if (!newFile.file) return
@@ -92,6 +100,10 @@ export default function Vault({ ghostMode }) {
     { id: 3, name: 'Perfect Attendance', year: '2024', tier: 'green' },
   ]
 
+  /**
+   * Returns the tailwind class for achievement tier styling.
+   * @param {string} tier - 'gold', 'blue', or 'green'.
+   */
   const getTierColor = (tier) => {
     switch (tier) {
       case 'gold': return 'text-neon-gold border-neon-gold/50 glow-gold'
