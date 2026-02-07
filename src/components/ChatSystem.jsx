@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import { MessageCircle, X, Send, Search, User, ChevronLeft } from 'lucide-react'
+import { MessageCircle, X, Send, Search, User, ChevronLeft, AtSign } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-export default function ChatSystem({ session }) {
-  const [isOpen, setIsOpen] = useState(false)
+export default function ChatSystem({ session, isOpen, onClose }) {
   const [activeChat, setActiveChat] = useState(null) // profile object of the person we are chatting with
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -53,10 +52,13 @@ export default function ChatSystem({ session }) {
   useEffect(() => {
     if (searchQuery.length > 2) {
       const searchUsers = async () => {
+        // Search by name OR username (handle)
+        // Note: Supabase 'ilike' with 'or' syntax: .or(`full_name.ilike.%${q}%,username.ilike.%${q}%`)
+        const q = searchQuery.replace('@', '') // strip @ if user typed it
         const { data } = await supabase
           .from('profiles')
           .select('*')
-          .ilike('full_name', `%${searchQuery}%`)
+          .or(`full_name.ilike.%${q}%,username.ilike.%${q}%`)
           .neq('id', currentUserId) // Don't show myself
           .limit(5)
         setSearchResults(data || [])
@@ -134,8 +136,6 @@ export default function ChatSystem({ session }) {
       console.error('Error sending:', error)
     } else {
       setNewMessage('')
-      // Optimistic update handled by subscription or we can do it manually if latency is high, 
-      // but subscription is cleaner for consistency.
     }
   }
 
@@ -145,171 +145,166 @@ export default function ChatSystem({ session }) {
     }, 100)
   }
 
-  if (!session) return null
+  if (!session || !isOpen) return null
 
   return (
-    <>
-      {/* Floating Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`fixed bottom-20 right-4 z-50 p-4 rounded-full shadow-lg shadow-neon-blue/20 transition-all ${
-          isOpen ? 'bg-zinc-800 text-zinc-400 rotate-90' : 'bg-neon-blue text-black hover:scale-110'
-        }`}
-      >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
-      </button>
-
-      {/* Chat Window */}
-      {isOpen && (
-        <div className="fixed bottom-36 right-4 w-96 h-[500px] bg-black/95 border border-zinc-800 rounded-2xl backdrop-blur-xl shadow-2xl overflow-hidden z-50 flex flex-col animate-scale-up">
-          
-          {/* Header */}
-          <div className="p-4 border-b border-white/10 bg-zinc-900/50 flex items-center justify-between">
-            {activeChat ? (
-              <div className="flex items-center gap-3">
-                <button onClick={() => setActiveChat(null)} className="p-1 hover:bg-white/10 rounded-full">
-                  <ChevronLeft size={20} className="text-zinc-400" />
-                </button>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-xs font-bold text-white">
-                    {activeChat.full_name?.[0] || activeChat.email[0]}
-                  </div>
-                  <div>
-                    <h3 className="text-white font-bold text-sm leading-tight">{activeChat.full_name || 'Student'}</h3>
-                    <p className="text-neon-green text-[10px] font-mono leading-tight">Online</p>
-                  </div>
-                </div>
+    <div className="fixed inset-0 z-[100] md:inset-auto md:bottom-24 md:right-4 md:w-96 md:h-[600px] bg-black/95 md:bg-black/95 md:border md:border-zinc-800 md:rounded-2xl backdrop-blur-xl shadow-2xl flex flex-col animate-scale-up">
+      
+      {/* Header */}
+      <div className="p-4 border-b border-white/10 bg-zinc-900/50 flex items-center justify-between shrink-0">
+        {activeChat ? (
+          <div className="flex items-center gap-3">
+            <button onClick={() => setActiveChat(null)} className="p-1 hover:bg-white/10 rounded-full">
+              <ChevronLeft size={24} className="text-zinc-400" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 flex items-center justify-center text-sm font-bold text-white">
+                {activeChat.full_name?.[0] || activeChat.email[0]}
               </div>
-            ) : (
-              <h3 className="text-white font-bold text-lg flex items-center gap-2">
-                <MessageCircle className="text-neon-blue" size={20} /> Messages
-              </h3>
-            )}
-          </div>
-
-          {/* Body */}
-          <div className="flex-1 overflow-y-auto bg-zinc-950/50">
-            {activeChat ? (
-              // Conversation View
-              <div className="p-4 space-y-3">
-                {messages.length === 0 && (
-                  <div className="text-center text-zinc-600 text-xs py-10">
-                    Start the conversation with {activeChat.full_name?.split(' ')[0]}
-                  </div>
-                )}
-                {messages.map((msg) => {
-                  const isMe = msg.sender_id === currentUserId
-                  return (
-                    <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm ${
-                        isMe 
-                          ? 'bg-neon-blue text-black rounded-tr-none' 
-                          : 'bg-zinc-800 text-white rounded-tl-none border border-zinc-700'
-                      }`}>
-                        {msg.content}
-                        <div className={`text-[8px] mt-1 text-right ${isMe ? 'text-black/50' : 'text-zinc-500'}`}>
-                          {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
-                <div ref={messagesEndRef} />
+              <div>
+                <h3 className="text-white font-bold text-sm leading-tight">{activeChat.full_name || 'Student'}</h3>
+                <p className="text-zinc-500 text-[10px] font-mono leading-tight">@{activeChat.username || 'unknown'}</p>
               </div>
-            ) : (
-              // Chat List / Search View
-              <div className="p-4 space-y-4">
-                {/* Search */}
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-                  <input
-                    type="text"
-                    placeholder="Search people..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2 pl-9 pr-4 text-sm text-white focus:border-neon-blue/50 focus:outline-none"
-                  />
-                </div>
-
-                {/* Search Results */}
-                {searchQuery.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Search Results</p>
-                    {searchResults.length === 0 ? (
-                      <p className="text-zinc-600 text-sm italic">No users found.</p>
-                    ) : (
-                      searchResults.map(profile => (
-                        <button
-                          key={profile.id}
-                          onClick={() => { setActiveChat(profile); setSearchQuery(''); }}
-                          className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors text-left"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400">
-                            <User size={18} />
-                          </div>
-                          <div>
-                            <p className="text-white font-medium text-sm">{profile.full_name || profile.email}</p>
-                            <p className="text-zinc-500 text-xs">{profile.role || 'Student'}</p>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-
-                {/* Recent Chats */}
-                {searchQuery.length === 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Recent</p>
-                    {recentChats.length === 0 ? (
-                      <p className="text-zinc-600 text-sm italic">No recent conversations.</p>
-                    ) : (
-                      recentChats.map(profile => (
-                        <button
-                          key={profile.id}
-                          onClick={() => setActiveChat(profile)}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-600 transition-all text-left"
-                        >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
-                            {profile.full_name?.[0] || 'U'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white font-medium text-sm truncate">{profile.full_name || 'Unknown User'}</p>
-                            <p className="text-zinc-500 text-xs">Tap to chat</p>
-                          </div>
-                          <ChevronRight size={16} className="text-zinc-600" />
-                        </button>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Footer (Input) */}
-          {activeChat && (
-            <div className="p-3 bg-zinc-900 border-t border-white/10">
-              <form onSubmit={sendMessage} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1 bg-black border border-zinc-800 rounded-xl px-4 py-2 text-sm text-white focus:border-neon-blue/50 focus:outline-none"
-                />
-                <button 
-                  type="submit" 
-                  disabled={!newMessage.trim()}
-                  className="p-2 bg-neon-blue text-black rounded-xl hover:bg-neon-blue/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  <Send size={18} />
-                </button>
-              </form>
             </div>
-          )}
+          </div>
+        ) : (
+          <h3 className="text-white font-bold text-xl flex items-center gap-2">
+            <MessageCircle className="text-neon-blue" size={24} /> Messages
+          </h3>
+        )}
+        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-zinc-400 hover:text-white transition-colors">
+          <X size={24} />
+        </button>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto bg-zinc-950/50 overscroll-contain">
+        {activeChat ? (
+          // Conversation View
+          <div className="p-4 space-y-3 min-h-full">
+            {messages.length === 0 && (
+              <div className="text-center text-zinc-600 text-xs py-10">
+                Start the conversation with @{activeChat.username || activeChat.full_name}
+              </div>
+            )}
+            {messages.map((msg) => {
+              const isMe = msg.sender_id === currentUserId
+              return (
+                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
+                    isMe 
+                      ? 'bg-neon-blue text-black rounded-tr-none' 
+                      : 'bg-zinc-800 text-white rounded-tl-none border border-zinc-700'
+                  }`}>
+                    {msg.content}
+                    <div className={`text-[9px] mt-1 text-right ${isMe ? 'text-black/50' : 'text-zinc-500'}`}>
+                      {new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+            <div ref={messagesEndRef} />
+          </div>
+        ) : (
+          // Chat List / Search View
+          <div className="p-4 space-y-6">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+              <input
+                type="text"
+                placeholder="Search by name or @handle..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:border-neon-blue/50 focus:outline-none"
+              />
+            </div>
+
+            {/* Search Results */}
+            {searchQuery.length > 0 && (
+              <div className="space-y-2 animate-fade-in">
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider px-1">Search Results</p>
+                {searchResults.length === 0 ? (
+                  <p className="text-zinc-600 text-sm italic px-1">No users found.</p>
+                ) : (
+                  searchResults.map(profile => (
+                    <button
+                      key={profile.id}
+                      onClick={() => { setActiveChat(profile); setSearchQuery(''); }}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-900/30 border border-zinc-800/50 hover:bg-zinc-900 hover:border-neon-blue/30 transition-all text-left group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 group-hover:text-neon-blue group-hover:bg-neon-blue/10 transition-colors">
+                        <AtSign size={18} />
+                      </div>
+                      <div>
+                        <p className="text-white font-medium text-sm">{profile.full_name}</p>
+                        <p className="text-zinc-500 text-xs">@{profile.username}</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Recent Chats */}
+            {searchQuery.length === 0 && (
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider px-1">Recent Conversations</p>
+                {recentChats.length === 0 ? (
+                  <div className="text-center py-10 border-2 border-dashed border-zinc-800 rounded-xl">
+                    <MessageCircle className="mx-auto text-zinc-700 mb-2" size={32} />
+                    <p className="text-zinc-600 text-sm">No recent messages.</p>
+                    <p className="text-zinc-700 text-xs mt-1">Search for a friend to start chatting!</p>
+                  </div>
+                ) : (
+                  recentChats.map(profile => (
+                    <button
+                      key={profile.id}
+                      onClick={() => setActiveChat(profile)}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-600 hover:bg-zinc-900 transition-all text-left"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-base shadow-lg shadow-indigo-500/20">
+                        {profile.full_name?.[0] || 'U'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-0.5">
+                          <p className="text-white font-bold text-sm truncate">{profile.full_name}</p>
+                          <span className="text-[10px] text-zinc-600">@{profile.username}</span>
+                        </div>
+                        <p className="text-zinc-500 text-xs truncate">Tap to open chat</p>
+                      </div>
+                      <ChevronRight size={16} className="text-zinc-600" />
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer (Input) */}
+      {activeChat && (
+        <div className="p-3 bg-zinc-900 border-t border-white/10 shrink-0 safe-area-pb">
+          <form onSubmit={sendMessage} className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="flex-1 bg-black border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white focus:border-neon-blue/50 focus:outline-none transition-colors"
+            />
+            <button 
+              type="submit" 
+              disabled={!newMessage.trim()}
+              className="p-3 bg-neon-blue text-black rounded-xl hover:bg-neon-blue/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg shadow-neon-blue/20"
+            >
+              <Send size={20} />
+            </button>
+          </form>
         </div>
       )}
-    </>
+    </div>
   )
 }
