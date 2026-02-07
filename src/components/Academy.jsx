@@ -3,6 +3,7 @@ import { Book, FileText, Search, User, Download, MessageCircle } from 'lucide-re
 
 export default function Academy() {
   const [activeSection, setActiveSection] = useState('resources')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const resources = [
     { id: 1, title: 'Data Structures Notes', type: 'PDF', size: '2.4 MB', author: 'Prof. Sharma' },
@@ -15,6 +16,16 @@ export default function Academy() {
     { id: 2, name: 'Prof. Neha Gupta', role: 'AI Specialist', status: 'busy', time: '14:00' },
     { id: 3, name: 'Mr. Rahul Verma', role: 'Cyber Labs', status: 'available', time: 'Now' },
   ]
+
+  const filteredResources = resources.filter(item => 
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    item.author.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const filteredFaculty = faculty.filter(prof => 
+    prof.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    prof.role.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   return (
     <div className="space-y-6 animate-slide-up pb-24">
@@ -30,6 +41,8 @@ export default function Academy() {
         <input 
           type="text" 
           placeholder="Search papers, books, faculty..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-white focus:outline-none focus:border-neon-blue/50 transition-colors"
         />
       </div>
@@ -59,49 +72,57 @@ export default function Academy() {
         {activeSection === 'resources' ? (
           <>
             <h2 className="text-white font-semibold px-1">Recent Uploads</h2>
-            {resources.map((item) => (
-              <div key={item.id} className="glass-panel p-4 flex items-center justify-between group active:scale-98 transition-transform">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-neon-purple/10 flex items-center justify-center text-neon-purple">
-                    <FileText size={20} />
+            {filteredResources.length === 0 ? (
+              <p className="text-slate-500 text-sm px-1 italic">No resources found matching "{searchQuery}"</p>
+            ) : (
+              filteredResources.map((item) => (
+                <div key={item.id} className="glass-panel p-4 flex items-center justify-between group active:scale-98 transition-transform">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-lg bg-neon-purple/10 flex items-center justify-center text-neon-purple">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-white text-sm font-medium">{item.title}</h3>
+                      <p className="text-xs text-slate-500">{item.author} • {item.size}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white text-sm font-medium">{item.title}</h3>
-                    <p className="text-xs text-slate-500">{item.author} • {item.size}</p>
-                  </div>
+                  <button className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
+                    <Download size={18} />
+                  </button>
                 </div>
-                <button className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
-                  <Download size={18} />
-                </button>
-              </div>
-            ))}
+              ))
+            )}
           </>
         ) : (
           <>
             <h2 className="text-white font-semibold px-1">Faculty Directory</h2>
-            {faculty.map((prof) => (
-              <div key={prof.id} className="glass-panel p-4 flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-bold text-xs border border-white/10">
-                    {prof.name.split(' ').map(n => n[0]).join('')}
+            {filteredFaculty.length === 0 ? (
+              <p className="text-slate-500 text-sm px-1 italic">No faculty found matching "{searchQuery}"</p>
+            ) : (
+              filteredFaculty.map((prof) => (
+                <div key={prof.id} className="glass-panel p-4 flex items-center justify-between group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white font-bold text-xs border border-white/10">
+                      {prof.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <h3 className="text-white text-sm font-medium">{prof.name}</h3>
+                      <p className="text-xs text-slate-500">{prof.role}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-white text-sm font-medium">{prof.name}</h3>
-                    <p className="text-xs text-slate-500">{prof.role}</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                      prof.status === 'available' ? 'bg-neon-green/10 text-neon-green border border-neon-green/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
+                    }`}>
+                      {prof.status === 'available' ? 'Online' : 'Busy'}
+                    </div>
+                    <button className="p-2 rounded-full bg-neon-blue/10 text-neon-blue hover:bg-neon-blue/20 transition-colors">
+                      <MessageCircle size={18} />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className={`text-[10px] font-bold px-2 py-1 rounded-full ${
-                    prof.status === 'available' ? 'bg-neon-green/10 text-neon-green border border-neon-green/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                  }`}>
-                    {prof.status === 'available' ? 'Online' : 'Busy'}
-                  </div>
-                  <button className="p-2 rounded-full bg-neon-blue/10 text-neon-blue hover:bg-neon-blue/20 transition-colors">
-                    <MessageCircle size={18} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </>
         )}
       </div>
