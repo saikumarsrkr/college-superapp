@@ -56,6 +56,7 @@ export default function Header({ ghostMode, setGhostMode, toggleChat }) {
           <span className="text-xs font-medium">Ghost</span>
         </button>
       </div>
+      </div>
     </header>
   )
 }
