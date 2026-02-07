@@ -6,8 +6,10 @@ A comprehensive Campus OS designed to digitize and gamify the college experience
 
 ## Features 🚀
 
-- **Role-Based Access**: Secure login for Students and Admins.
-- **Admin Dashboard**: Manage classes, dining menus, and skills dynamically.
+- **Secure Context Routing**:
+  - **Student Portal**: `app.example.com` - Optimized for mobile/student experience.
+  - **Admin Command Center**: `admin.example.com` - Restricted access with advanced CRUD tools.
+- **Role-Based Security**: Row-Level Security (RLS) policies ensure data integrity.
 - **Academic Hub**: Access resources, faculty directory, and research papers.
 - **Arena (Gamification)**: Skill tree system to unlock achievements and track progress.
 - **Dining**: View mess menus, ratings, and hostel maintenance requests.
