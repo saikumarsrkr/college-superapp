@@ -2,6 +2,19 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { Plus, Trash, LogOut, Utensils, BookOpen, Trophy, Save, X } from 'lucide-react'
 
+/**
+ * Admin Dashboard Component
+ * 
+ * The central command center for administrators.
+ * Features:
+ * - Real-time management of Dining, Classes, and Skills.
+ * - CRUD operations via Supabase (R/W access for Admins).
+ * - Live subscription to table changes.
+ * 
+ * @component
+ * @param {Object} props - Component props.
+ * @param {function} props.onLogout - Callback to handle admin logout.
+ */
 export default function AdminDashboard({ onLogout }) {
   const [activeSection, setActiveSection] = useState('dining')
   const [items, setItems] = useState([])
@@ -30,6 +43,9 @@ export default function AdminDashboard({ onLogout }) {
     }
   }, [activeSection])
 
+  /**
+   * Fetches data for the currently active section.
+   */
   const fetchItems = async () => {
     setLoading(true)
     let table = ''
@@ -43,6 +59,10 @@ export default function AdminDashboard({ onLogout }) {
     setLoading(false)
   }
 
+  /**
+   * Deletes a record from the database.
+   * @param {number} id - The ID of the record to delete.
+   */
   const handleDelete = async (id) => {
     if (!confirm('Are you sure you want to delete this record?')) return
     let table = ''
@@ -55,6 +75,11 @@ export default function AdminDashboard({ onLogout }) {
     // Realtime will handle refresh
   }
 
+  /**
+   * Handles the creation of a new record.
+   * Maps form inputs to the correct table schema based on activeSection.
+   * @param {Event} e - Form submission event.
+   */
   const handleAdd = async (e) => {
     e.preventDefault()
     let table = ''

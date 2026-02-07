@@ -2,12 +2,27 @@ import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { Shield, Lock, ArrowRight, AlertTriangle } from 'lucide-react'
 
+/**
+ * Admin Login Component
+ * 
+ * Provides a secure login interface restricted to users with the 'admin' role.
+ * Validates credentials via Supabase Auth and checks role permissions in the 'profiles' table.
+ * 
+ * @component
+ * @param {Object} props - Component props.
+ * @param {function} props.onLogin - Callback fired upon successful admin authentication. Receives the role string.
+ */
 export default function AdminLogin({ onLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  /**
+   * Handles the form submission for admin login.
+   * Performs dual-check: Auth sign-in + Role verification.
+   * @param {Event} e - Form submission event.
+   */
   const handleAdminLogin = async (e) => {
     e.preventDefault()
     setLoading(true)

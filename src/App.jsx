@@ -12,6 +12,19 @@ import AdminLogin from './components/AdminLogin'
 import AdminDashboard from './components/AdminDashboard'
 import { supabase } from './lib/supabase'
 
+/**
+ * Main Application Component
+ * 
+ * Handles authentication state, role-based routing (Admin vs Student),
+ * and renders the appropriate layout based on the current context.
+ * 
+ * Contexts:
+ * - Admin Context: Detected via 'admin' subdomain or '/admin' path.
+ * - Student Context: Default view.
+ * 
+ * @component
+ * @returns {JSX.Element} The rendered application.
+ */
 function App() {
   const [session, setSession] = useState(null)
   const [role, setRole] = useState(null)
@@ -43,9 +56,21 @@ function App() {
     }
   }, [])
 
+  /**
+   * Fetches the user's role from the 'profiles' table.
+   * @param {string} userId - The unique ID of the user.
+   */
   const fetchRole = async (userId) => {
     const { data } = await supabase.from('profiles').select('role').eq('id', userId).single()
     if (data) setRole(data.role)
+  }
+
+  /**
+   * Updates the role state after a successful admin login.
+   * @param {string} nextRole - The role to set (e.g., 'admin').
+   */
+  const handleLogin = (nextRole) => {
+    setRole(nextRole)
   }
 
   // --- ROUTING LOGIC ---
