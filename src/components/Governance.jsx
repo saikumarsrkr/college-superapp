@@ -2,6 +2,20 @@ import { useState, useEffect } from 'react'
 import { Clock, AlertTriangle, CheckCircle, Timer } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Governance Component
+ * 
+ * Manages campus complaints, tickets, and resolution tracking.
+ * Features:
+ * - Ticket List: Real-time feed of all public/student tickets.
+ * - Status Indicators: Visual cues for Resolved, In-Progress, Pending, Overdue.
+ * - SLA Tracking: Dynamic calculation of remaining time based on `sla_due_at`.
+ * - Analytics: Response time metrics visualization.
+ * 
+ * @component
+ * @param {Object} props - Component props.
+ * @param {boolean} props.ghostMode - Whether ghost mode is enabled (blurs IDs).
+ */
 export default function Governance({ ghostMode }) {
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(false)
