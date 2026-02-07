@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react'
 import { Lock, Map, Zap, CheckCircle, ChevronRight, Star, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Arena Component
+ * 
+ * Displays the gamified skill tree for students.
+ * Features:
+ * - Interactive Constellation View (Graph)
+ * - Linear Learning Path View
+ * - Skill details modal with "Start Mission" action.
+ * - Real-time progress tracking via Supabase.
+ * 
+ * @component
+ */
 export default function Arena() {
   const [skills, setSkills] = useState([])
   const [viewMode, setViewMode] = useState('graph') // 'graph' | 'path'
