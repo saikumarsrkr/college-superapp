@@ -2,6 +2,20 @@ import { useState, useEffect } from 'react'
 import { Shield, FileText, Award, Lock, ExternalLink, Upload, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Vault Component
+ * 
+ * Secure digital locker for important student documents and achievements.
+ * Features:
+ * - Document Storage: Upload and list files (Identity, Academic, Financial).
+ * - Verification Status: Indicators for verified vs pending documents.
+ * - Achievements: Showcase for awards and honors.
+ * - Privacy: RLS-protected (users see only their own data).
+ * 
+ * @component
+ * @param {Object} props - Component props.
+ * @param {boolean} props.ghostMode - Whether ghost mode is enabled (blurs sensitive text).
+ */
 export default function Vault({ ghostMode }) {
   const [documents, setDocuments] = useState([])
   const [uploading, setUploading] = useState(false)
