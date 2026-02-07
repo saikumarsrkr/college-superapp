@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react'
 import { FileText, Search, Download, MessageCircle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
+/**
+ * Academy Component
+ * 
+ * Central hub for academic resources and faculty directory.
+ * Features:
+ * - Resource Library: Browsable list of study materials (PDFs, Docs).
+ * - Faculty Directory: List of professors with roles and availability status.
+ * - Search: Real-time filtering by name/title across both tabs.
+ * - Backend Integration: Fetches data from 'resources' and 'faculty' tables.
+ * 
+ * @component
+ */
 export default function Academy() {
   const [activeSection, setActiveSection] = useState('resources')
   const [searchQuery, setSearchQuery] = useState('')
