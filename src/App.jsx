@@ -48,21 +48,25 @@ function App() {
 
   useEffect(() => {
     // Auth logic
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session) fetchRole(session.user.id)
-    })
+    let authSubscription
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
       setSession(session)
-      if (session) fetchRole(session.user.id)
-      else setRole(null)
-    })
+      if (session?.user?.id) fetchRole(session.user.id)
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session)
+        if (session?.user?.id) fetchRole(session.user.id)
+        else setRole(null)
+      })
+      authSubscription = subscription
+    }
+
+    initAuth()
 
     return () => {
-      subscription.unsubscribe()
+      if (authSubscription) authSubscription.unsubscribe()
     }
   }, [])
 
