@@ -35,7 +35,6 @@ export default function Arena() {
     return () => {
       supabase.removeChannel(subscription)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const getNodeById = (id) => skills.find(s => s.id === id)
