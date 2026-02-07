@@ -41,7 +41,7 @@ export default function Arena() {
 
   return (
     <section className="space-y-6 pb-24">
-      <div className="flex justify-between items-end">
+      <div className="flex justify-between items-end px-2 pt-2">
         <div>
           <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
             <Zap className="text-neon-gold fill-neon-gold" size={24} />
