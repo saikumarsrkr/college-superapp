@@ -23,6 +23,9 @@ export default function Academy() {
 
   // Fetch Data on Load
   useEffect(() => {
+    /**
+     * Asynchronously loads resources and faculty data from Supabase.
+     */
     const fetchData = async () => {
       setLoading(true)
       
