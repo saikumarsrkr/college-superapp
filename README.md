@@ -7,8 +7,8 @@ A comprehensive Campus OS designed to digitize and gamify the college experience
 ## Features 🚀
 
 - **Secure Context Routing**:
-  - **Student Portal**: `app.saikumar.space` - Optimized for mobile/student experience.
-  - **Admin Command Center**: `admin.saikumar.space` - Restricted access with advanced CRUD tools.
+  - **Student Portal**: `app.example.com` - Optimized for mobile/student experience.
+  - **Admin Command Center**: `admin.example.com` - Restricted access with advanced CRUD tools.
 - **Role-Based Security**: Row-Level Security (RLS) policies ensure data integrity.
 - **Academic Hub**: Access resources, faculty directory, and research papers.
 - **Arena (Gamification)**: Skill tree system to unlock achievements and track progress.
