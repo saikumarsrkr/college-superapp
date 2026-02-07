@@ -341,7 +341,6 @@ export default function AdminDashboard({ onLogout }) {
   )
 }
 
-// eslint-disable-next-line no-unused-vars
 const InputGroup = ({ label, type = 'text', placeholder, value, onChange, required, textarea }) => (
   <div className="space-y-1.5">
     <label className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider ml-1">{label}</label>
