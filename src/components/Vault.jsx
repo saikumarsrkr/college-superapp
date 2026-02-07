@@ -1,12 +1,76 @@
-import { Shield, FileText, Award, Lock, ExternalLink } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Shield, FileText, Award, Lock, ExternalLink, Upload, X } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 export default function Vault({ ghostMode }) {
-  const documents = [
-    { id: 1, name: 'ID Card', type: 'Identity', verified: true },
-    { id: 2, name: 'Fee Receipt - Sem 4', type: 'Financial', verified: true },
-    { id: 3, name: 'Library Card', type: 'Access', verified: true },
-    { id: 4, name: 'Bonafide Certificate', type: 'Academic', verified: false },
-  ]
+  const [documents, setDocuments] = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [showUpload, setShowUpload] = useState(false)
+  const [newFile, setNewFile] = useState({ name: '', type: 'Identity', file: null })
+
+  useEffect(() => {
+    fetchDocuments()
+  }, [])
+
+  const fetchDocuments = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('student_id', user.id)
+      .order('created_at', { ascending: false })
+    
+    if (data) setDocuments(data)
+  }
+
+  const handleUpload = async (e) => {
+    e.preventDefault()
+    if (!newFile.file) return
+    setUploading(true)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    // 1. Upload file to Storage (assuming bucket 'vault' exists, if not we catch error)
+    const fileExt = newFile.file.name.split('.').pop()
+    const fileName = `${user.id}/${Date.now()}.${fileExt}`
+    
+    // For MVP, we skip actual storage bucket creation in migration (requires API/dashboard usually)
+    // We will simulate the file URL or store a dummy link if storage fails, 
+    // or assume the bucket exists.
+    // Let's try to upload to a public bucket 'vault' if it exists.
+    
+    const { error: uploadError } = await supabase.storage
+      .from('vault')
+      .upload(fileName, newFile.file)
+
+    let fileUrl = '#'
+    if (!uploadError) {
+      const { data } = supabase.storage.from('vault').getPublicUrl(fileName)
+      fileUrl = data.publicUrl
+    } else {
+      console.warn("Storage not setup, saving metadata only.")
+    }
+
+    // 2. Insert record
+    const { error: dbError } = await supabase.from('documents').insert([{
+      student_id: user.id,
+      name: newFile.name,
+      type: newFile.type,
+      file_url: fileUrl,
+      is_verified: false
+    }])
+
+    if (dbError) {
+      alert('Error saving document: ' + dbError.message)
+    } else {
+      setShowUpload(false)
+      fetchDocuments()
+    }
+    setUploading(false)
+  }
 
   const achievements = [
     { id: 1, name: 'Dean\'s List', year: '2025', tier: 'gold' },
@@ -24,10 +88,18 @@ export default function Vault({ ghostMode }) {
   }
 
   return (
-    <section className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-white mb-1">Vault</h2>
-        <p className="text-slate-400 text-sm">Your secure documents & achievements</p>
+    <section className="space-y-6 pb-24">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-bold text-white mb-1">Vault</h2>
+          <p className="text-slate-400 text-sm">Secure storage</p>
+        </div>
+        <button 
+          onClick={() => setShowUpload(true)}
+          className="p-2 bg-white/5 rounded-full hover:bg-white/10 text-white"
+        >
+          <Upload size={20} />
+        </button>
       </div>
 
       {/* Security Status */}
@@ -47,35 +119,79 @@ export default function Vault({ ghostMode }) {
       <div>
         <h3 className="text-white font-semibold mb-3">Documents</h3>
         <div className="space-y-2">
-          {documents.map((doc) => (
-            <article key={doc.id} className="glass p-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
-                  <FileText size={18} className="text-slate-400" />
+          {documents.length === 0 ? (
+            <p className="text-slate-500 text-sm italic">No documents uploaded.</p>
+          ) : (
+            documents.map((doc) => (
+              <article key={doc.id} className="glass p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center">
+                    <FileText size={18} className="text-slate-400" />
+                  </div>
+                  <div>
+                    <p className={`text-white text-sm font-medium ${ghostMode ? 'ghost-blur' : ''}`}>
+                      {doc.name}
+                    </p>
+                    <p className="text-slate-500 text-xs">{doc.type}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className={`text-white text-sm font-medium ${ghostMode ? 'ghost-blur' : ''}`}>
-                    {doc.name}
-                  </p>
-                  <p className="text-slate-500 text-xs">{doc.type}</p>
+                <div className="flex items-center gap-2">
+                  {doc.is_verified ? (
+                    <span className="text-neon-green text-xs font-medium">Verified</span>
+                  ) : (
+                    <span className="text-neon-gold text-xs font-medium">Pending</span>
+                  )}
+                  <button className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
+                    <ExternalLink size={14} className="text-slate-400" />
+                  </button>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {doc.verified ? (
-                  <span className="text-neon-green text-xs font-medium">Verified</span>
-                ) : (
-                  <span className="text-neon-gold text-xs font-medium">Pending</span>
-                )}
-                <button className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors">
-                  <ExternalLink size={14} className="text-slate-400" />
-                </button>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Achievements */}
+      {/* Upload Modal */}
+      {showUpload && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold text-white">Upload Document</h3>
+              <button onClick={() => setShowUpload(false)}><X className="text-zinc-500" /></button>
+            </div>
+            <form onSubmit={handleUpload} className="space-y-4">
+              <input 
+                type="text" 
+                placeholder="Document Name" 
+                className="input-field" 
+                value={newFile.name} 
+                onChange={e => setNewFile({...newFile, name: e.target.value})} 
+                required 
+              />
+              <select 
+                className="input-field"
+                value={newFile.type}
+                onChange={e => setNewFile({...newFile, type: e.target.value})}
+              >
+                <option value="Identity">Identity</option>
+                <option value="Academic">Academic</option>
+                <option value="Financial">Financial</option>
+              </select>
+              <input 
+                type="file" 
+                className="text-slate-400 text-sm" 
+                onChange={e => setNewFile({...newFile, file: e.target.files[0]})} 
+                required 
+              />
+              <button type="submit" disabled={uploading} className="w-full btn-primary">
+                {uploading ? 'Uploading...' : 'Save to Vault'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Achievements (Static for now) */}
       <div>
         <h3 className="text-white font-semibold mb-3">Achievements</h3>
         <div className="grid grid-cols-3 gap-3">
@@ -91,25 +207,6 @@ export default function Vault({ ghostMode }) {
           ))}
         </div>
       </div>
-
-      {/* Privacy Controls */}
-      <article className="glass p-4">
-        <h3 className="text-white font-semibold mb-3">Privacy Controls</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300 text-sm">Share with recruiters</span>
-            <button className="w-12 h-6 rounded-full bg-neon-blue/30 relative">
-              <div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-neon-blue" />
-            </button>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-300 text-sm">Show on profile</span>
-            <button className="w-12 h-6 rounded-full bg-slate-700 relative">
-              <div className="absolute left-1 top-1 w-4 h-4 rounded-full bg-slate-500" />
-            </button>
-          </div>
-        </div>
-      </article>
     </section>
   )
 }
