@@ -21,7 +21,7 @@ export default function Dining() {
     // Real-time subscription
     const subscription = supabase
       .channel('meals-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, () => {
         // Fetch fresh data on any change to keep it simple and accurate
         fetchMeals()
       })
@@ -77,12 +77,12 @@ export default function Dining() {
       <div>
         <h3 className="text-white font-semibold mb-3">Quick Maintenance</h3>
         <div className="grid grid-cols-3 gap-3">
-          {maintenance.map(({ id, icon: Icon, label, color }) => (
+          {maintenance.map(({ id, icon: MaintenanceIcon, label, color }) => (
             <button
               key={id}
               className="glass p-4 flex flex-col items-center gap-2 hover:bg-white/10 transition-all group"
             >
-              <Icon className={`w-6 h-6 ${color} group-hover:scale-110 transition-transform`} />
+              <MaintenanceIcon className={`w-6 h-6 ${color} group-hover:scale-110 transition-transform`} />
               <span className="text-xs text-slate-300">{label}</span>
             </button>
           ))}
