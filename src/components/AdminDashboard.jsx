@@ -22,6 +22,22 @@ export default function AdminDashboard({ onLogout }) {
   const [showAddModal, setShowAddModal] = useState(false)
   const [newItem, setNewItem] = useState({})
 
+  /**
+   * Fetches data for the currently active section.
+   */
+  const fetchItems = async () => {
+    setLoading(true)
+    let table = ''
+    if (activeSection === 'dining') table = 'meals'
+    if (activeSection === 'classes') table = 'classes'
+    if (activeSection === 'skills') table = 'skills'
+
+    const { data, error } = await supabase.from(table).select('*').order('id', { ascending: false })
+    if (error) console.error('Error fetching:', error)
+    else setItems(data || [])
+    setLoading(false)
+  }
+
   useEffect(() => {
     fetchItems()
 
@@ -41,23 +57,8 @@ export default function AdminDashboard({ onLogout }) {
     return () => {
       supabase.removeChannel(subscription)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSection])
-
-  /**
-   * Fetches data for the currently active section.
-   */
-  const fetchItems = async () => {
-    setLoading(true)
-    let table = ''
-    if (activeSection === 'dining') table = 'meals'
-    if (activeSection === 'classes') table = 'classes'
-    if (activeSection === 'skills') table = 'skills'
-
-    const { data, error } = await supabase.from(table).select('*').order('id', { ascending: false })
-    if (error) console.error('Error fetching:', error)
-    else setItems(data || [])
-    setLoading(false)
-  }
 
   /**
    * Deletes a record from the database.
@@ -141,7 +142,7 @@ export default function AdminDashboard({ onLogout }) {
             { id: 'dining', icon: Utensils, label: 'Dining Menu', desc: 'Manage meals & timings' },
             { id: 'classes', icon: BookOpen, label: 'Timetable', desc: 'Schedule classes & labs' },
             { id: 'skills', icon: Trophy, label: 'Skill Tree', desc: 'Gamification rewards' },
-          ].map(({ id, icon: Icon, label, desc }) => (
+          ].map(({ id, icon: SectionIcon, label, desc }) => (
             <button
               key={id}
               onClick={() => setActiveSection(id)}
@@ -152,10 +153,10 @@ export default function AdminDashboard({ onLogout }) {
               }`}
             >
               <div className={`absolute top-0 right-0 p-4 opacity-10 transition-transform duration-500 ${activeSection === id ? 'scale-110 rotate-12 text-red-500' : 'scale-100 rotate-0 text-white'}`}>
-                <Icon size={80} />
+                <SectionIcon size={80} />
               </div>
               <div className="relative z-10">
-                <Icon size={24} className={`mb-3 ${activeSection === id ? 'text-red-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
+                <SectionIcon size={24} className={`mb-3 ${activeSection === id ? 'text-red-500' : 'text-zinc-500 group-hover:text-zinc-300'}`} />
                 <h3 className={`text-lg font-bold ${activeSection === id ? 'text-white' : 'text-zinc-400 group-hover:text-white'}`}>{label}</h3>
                 <p className="text-xs text-zinc-600 mt-1">{desc}</p>
               </div>

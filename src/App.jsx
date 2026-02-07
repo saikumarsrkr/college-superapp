@@ -36,6 +36,15 @@ function App() {
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
   const isAdminContext = hostname.startsWith('admin.') || (isLocal && window.location.pathname === '/admin')
 
+  /**
+   * Fetches the user's role from the 'profiles' table.
+   * @param {string} userId - The unique ID of the user.
+   */
+  const fetchRole = async (userId) => {
+    const { data } = await supabase.from('profiles').select('role').eq('id', userId).single()
+    if (data) setRole(data.role)
+  }
+
   useEffect(() => {
     // Auth logic
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -55,15 +64,6 @@ function App() {
       subscription.unsubscribe()
     }
   }, [])
-
-  /**
-   * Fetches the user's role from the 'profiles' table.
-   * @param {string} userId - The unique ID of the user.
-   */
-  const fetchRole = async (userId) => {
-    const { data } = await supabase.from('profiles').select('role').eq('id', userId).single()
-    if (data) setRole(data.role)
-  }
 
   /**
    * Updates the role state after a successful admin login.
