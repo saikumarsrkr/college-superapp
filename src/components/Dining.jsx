@@ -88,15 +88,20 @@ export default function Dining() {
   const handleCancelTicket = async (ticketId) => {
     if (!confirm('Are you sure you want to cancel this ticket?')) return
 
-    const { error } = await supabase
-      .from('tickets')
-      .delete()
-      .eq('id', ticketId)
+    try {
+      const { error } = await supabase
+        .from('tickets')
+        .delete()
+        .eq('id', ticketId)
 
-    if (error) {
+      if (error) throw error
+      
+      // Manually remove the deleted ticket from state to update UI instantly
+      setMyTickets(prev => prev.filter(t => t.id !== ticketId))
+      
+    } catch (error) {
+      console.error('Error deleting ticket:', error)
       alert('Error cancelling ticket: ' + error.message)
-    } else {
-      fetchData()
     }
   }
 
