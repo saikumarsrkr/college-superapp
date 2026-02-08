@@ -55,6 +55,7 @@ export default function Header({ ghostMode, setGhostMode, toggleChat }) {
           {ghostMode ? <EyeOff size={18} /> : <Eye size={18} />}
           <span className="text-xs font-medium">Ghost</span>
         </button>
+        </div>
       </div>
     </header>
   )
