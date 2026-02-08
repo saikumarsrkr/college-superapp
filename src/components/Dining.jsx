@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Utensils, Star, Camera, Droplets, Zap, Wifi, X, Send, AlertCircle } from 'lucide-react'
+import { Utensils, Star, Camera, Droplets, Zap, Wifi, X, Send, AlertCircle, Thermometer, Hammer, PaintBucket } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const maintenanceOptions = [
   { id: 'plumbing', icon: Droplets, label: 'Plumbing', color: 'text-blue-400' },
   { id: 'electrical', icon: Zap, label: 'Electrical', color: 'text-yellow-400' },
   { id: 'wifi', icon: Wifi, label: 'WiFi', color: 'text-neon-blue' },
+  { id: 'ac', icon: Thermometer, label: 'AC/Cooling', color: 'text-cyan-300' },
+  { id: 'furniture', icon: Hammer, label: 'Furniture', color: 'text-orange-400' },
+  { id: 'cleaning', icon: PaintBucket, label: 'Cleaning', color: 'text-pink-400' },
 ]
 
 export default function Dining() {
@@ -65,7 +68,7 @@ export default function Dining() {
   }
 
   return (
-    <section className="space-y-6 pb-24">
+    <section className="space-y-6 pb-24 animate-slide-up">
       <div>
         <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
           <Utensils className="w-5 h-5 text-neon-gold" />
@@ -108,7 +111,7 @@ export default function Dining() {
       {/* Quick Maintenance */}
       <div>
         <h3 className="text-white font-semibold mb-3">Quick Maintenance</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
           {maintenanceOptions.map(({ id, icon, label, color }) => {
             const Icon = icon
             return (
@@ -127,7 +130,7 @@ export default function Dining() {
       {/* Hostel Info */}
       <div className="glass p-4">
         <h3 className="text-white font-semibold mb-3">Your Room</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
             <p className="text-slate-400">Block</p>
             <p className="text-white font-medium">C-204</p>
@@ -149,37 +152,64 @@ export default function Dining() {
 
       {/* Ticket Modal */}
       {ticketModal.open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-zinc-900 border border-zinc-700 w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden animate-slide-up p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <AlertCircle className="text-neon-gold" />
-                Report {maintenanceOptions.find(m => m.id === ticketModal.category)?.label} Issue
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="bg-zinc-900 border border-zinc-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-scale-up p-6 relative">
+            <button 
+              onClick={() => setTicketModal({ ...ticketModal, open: false })} 
+              className="absolute top-4 right-4 p-2 bg-zinc-800 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors z-10"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="mb-6 text-center">
+              <div className={`w-16 h-16 mx-auto rounded-full bg-zinc-800 flex items-center justify-center mb-4 border border-zinc-700`}>
+                <AlertCircle className="w-8 h-8 text-neon-gold" />
+              </div>
+              <h3 className="text-xl font-bold text-white">
+                Report Issue
               </h3>
-              <button onClick={() => setTicketModal({ ...ticketModal, open: false })} className="text-zinc-400 hover:text-white">
-                <X size={20} />
-              </button>
+              <p className="text-zinc-400 text-sm mt-1">
+                Category: <span className="text-neon-blue">{maintenanceOptions.find(m => m.id === ticketModal.category)?.label}</span>
+              </p>
             </div>
 
-            <form onSubmit={handleSubmitTicket} className="space-y-4">
+            <form onSubmit={handleSubmitTicket} className="space-y-5">
               <div>
-                <label className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-1 block">Description</label>
+                <label className="text-xs text-zinc-500 font-bold uppercase tracking-wider mb-2 block">
+                  Describe the Problem
+                </label>
                 <textarea
-                  className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-sm text-white focus:border-neon-blue/50 focus:outline-none min-h-[100px]"
-                  placeholder="Describe the issue (e.g., leaking tap, no signal)..."
+                  className="w-full bg-black border border-zinc-800 rounded-xl p-4 text-sm text-white focus:border-neon-blue/50 focus:ring-1 focus:ring-neon-blue/50 focus:outline-none min-h-[120px] transition-all placeholder:text-zinc-600"
+                  placeholder="e.g. The tap in the bathroom is leaking continuously..."
                   value={ticketModal.description}
                   onChange={(e) => setTicketModal({ ...ticketModal, description: e.target.value })}
                   required
+                  autoFocus
                 />
               </div>
 
-              <button 
-                type="submit" 
-                disabled={loading}
-                className="w-full py-3 bg-white text-black font-bold rounded-xl hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2"
-              >
-                {loading ? 'Submitting...' : <><Send size={18} /> Submit Ticket</>}
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setTicketModal({ ...ticketModal, open: false })}
+                  className="flex-1 py-3 bg-zinc-800 text-white font-bold rounded-xl hover:bg-zinc-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="flex-[2] py-3 bg-neon-blue text-black font-bold rounded-xl hover:bg-cyan-400 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-neon-blue/20"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Send size={18} /> Submit Ticket
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         </div>
