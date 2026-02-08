@@ -21,26 +21,23 @@ export default function Vault({ ghostMode }) {
   const [uploading, setUploading] = useState(false)
   const [showUpload, setShowUpload] = useState(false)
   const [newFile, setNewFile] = useState({ name: '', type: 'Identity', file: null })
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
+    const fetchDocuments = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('documents')
+        .select('*')
+        .eq('student_id', user.id)
+        .order('created_at', { ascending: false })
+      
+      if (data) setDocuments(data)
+    }
     fetchDocuments()
-  }, [])
-
-  /**
-   * Fetches the user's documents from the database.
-   */
-  const fetchDocuments = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-
-    const { data } = await supabase
-      .from('documents')
-      .select('*')
-      .eq('student_id', user.id)
-      .order('created_at', { ascending: false })
-    
-    if (data) setDocuments(data)
-  }
+  }, [refreshTrigger])
 
   /**
    * Handles file upload process:
@@ -89,7 +86,7 @@ export default function Vault({ ghostMode }) {
       alert('Error saving document: ' + dbError.message)
     } else {
       setShowUpload(false)
-      fetchDocuments()
+      setRefreshTrigger(prev => prev + 1)
     }
     setUploading(false)
   }
