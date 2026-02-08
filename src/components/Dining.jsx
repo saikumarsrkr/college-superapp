@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Utensils, Star, Camera, Droplets, Zap, Wifi, X, Send, AlertCircle, Thermometer, Hammer, PaintBucket } from 'lucide-react'
+import { Utensils, Star, Camera, Droplets, Zap, Wifi, X, Send, AlertCircle, Thermometer, Hammer, PaintBucket, Clock, CheckCircle, Trash2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
 const maintenanceOptions = [
@@ -13,28 +13,45 @@ const maintenanceOptions = [
 
 export default function Dining() {
   const [meals, setMeals] = useState([])
+  const [myTickets, setMyTickets] = useState([])
   const [ticketModal, setTicketModal] = useState({ open: false, category: null, description: '' })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    const fetchMeals = async () => {
-      const { data } = await supabase.from('meals').select('*').order('served_at', { ascending: true })
-      if (data) setMeals(data)
-    }
-    fetchMeals()
+    fetchData()
 
-    // Real-time subscription
-    const subscription = supabase
-      .channel('meals-channel')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, () => {
-        fetchMeals()
-      })
+    const mealSub = supabase
+      .channel('dining-meals')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'meals' }, () => fetchData())
+      .subscribe()
+
+    const ticketSub = supabase
+      .channel('dining-tickets')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => fetchData())
       .subscribe()
 
     return () => {
-      supabase.removeChannel(subscription)
+      supabase.removeChannel(mealSub)
+      supabase.removeChannel(ticketSub)
     }
   }, [])
+
+  const fetchData = async () => {
+    // Fetch Meals
+    const { data: mealData } = await supabase.from('meals').select('*').order('served_at', { ascending: true })
+    if (mealData) setMeals(mealData)
+
+    // Fetch My Tickets
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      const { data: ticketData } = await supabase
+        .from('tickets')
+        .select('*')
+        .eq('student_id', user.id)
+        .order('created_at', { ascending: false })
+      if (ticketData) setMyTickets(ticketData)
+    }
+  }
 
   const handleSubmitTicket = async (e) => {
     e.preventDefault()
@@ -62,9 +79,34 @@ export default function Dining() {
       alert('Failed to submit ticket: ' + error.message)
     } else {
       setTicketModal({ open: false, category: null, description: '' })
+      fetchData() // Refresh tickets immediately
       alert('Ticket raised successfully! Maintenance team has been notified.')
     }
     setLoading(false)
+  }
+
+  const handleCancelTicket = async (ticketId) => {
+    if (!confirm('Are you sure you want to cancel this ticket?')) return
+
+    const { error } = await supabase
+      .from('tickets')
+      .delete()
+      .eq('id', ticketId)
+
+    if (error) {
+      alert('Error cancelling ticket: ' + error.message)
+    } else {
+      fetchData()
+    }
+  }
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'resolved': return 'text-neon-green border-neon-green/30 bg-neon-green/10'
+      case 'in-progress': return 'text-neon-blue border-neon-blue/30 bg-neon-blue/10'
+      case 'open': return 'text-neon-gold border-neon-gold/30 bg-neon-gold/10'
+      default: return 'text-slate-400 border-slate-600 bg-slate-800/50'
+    }
   }
 
   return (
@@ -124,6 +166,52 @@ export default function Dining() {
               <span className="text-xs text-slate-300">{label}</span>
             </button>
           )})}
+        </div>
+      </div>
+
+      {/* My Requests Section */}
+      <div>
+        <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-neon-blue" />
+          My Requests
+        </h3>
+        <div className="space-y-3">
+          {myTickets.length === 0 ? (
+            <div className="glass p-4 text-center text-slate-500 text-sm">
+              No active maintenance requests.
+            </div>
+          ) : (
+            myTickets.map((ticket) => (
+              <div key={ticket.id} className="glass p-4 flex items-center justify-between group">
+                <div>
+                  <h4 className="text-white font-medium text-sm">{ticket.title}</h4>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${getStatusColor(ticket.status)} uppercase tracking-wide`}>
+                      {ticket.status}
+                    </span>
+                    <span className="text-slate-500 text-xs">
+                      {new Date(ticket.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {ticket.status === 'resolved' && (
+                    <p className="text-neon-green text-[10px] mt-1 flex items-center gap-1">
+                      <CheckCircle size={10} /> Resolved on {new Date(ticket.updated_at).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+                
+                {ticket.status === 'open' && (
+                  <button 
+                    onClick={() => handleCancelTicket(ticket.id)}
+                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    title="Cancel Request"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
+              </div>
+            ))
+          )}
         </div>
       </div>
 
