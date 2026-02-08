@@ -1,25 +1,55 @@
-import { useState } from 'react'
-import { Book, FileText, Search, User, Download, MessageCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { FileText, Search, Download, MessageCircle } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
+/**
+ * Academy Component
+ * 
+ * Central hub for academic resources and faculty directory.
+ * Features:
+ * - Resource Library: Browsable list of study materials (PDFs, Docs).
+ * - Faculty Directory: List of professors with roles and availability status.
+ * - Search: Real-time filtering by name/title across both tabs.
+ * - Backend Integration: Fetches data from 'resources' and 'faculty' tables.
+ * 
+ * @component
+ */
 export default function Academy() {
   const [activeSection, setActiveSection] = useState('resources')
   const [searchQuery, setSearchQuery] = useState('')
+  const [resources, setResources] = useState([])
+  const [faculty, setFaculty] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  const resources = [
-    { id: 1, title: 'Data Structures Notes', type: 'PDF', size: '2.4 MB', author: 'Prof. Sharma' },
-    { id: 2, title: 'ML Lab Manual v2', type: 'DOCX', size: '1.1 MB', author: 'Dr. Emily' },
-    { id: 3, title: 'Cybersec Research Paper', type: 'PDF', size: '4.5 MB', author: 'IEEE' },
-  ]
+  // Fetch Data on Load
+  useEffect(() => {
+    /**
+     * Asynchronously loads resources and faculty data from Supabase.
+     */
+    const fetchData = async () => {
+      setLoading(true)
+      
+      const { data: resData } = await supabase
+        .from('resources')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      const { data: facData } = await supabase
+        .from('faculty')
+        .select('*')
+        .order('name', { ascending: true })
 
-  const faculty = [
-    { id: 1, name: 'Dr. Arjun Singh', role: 'HOD - CSE', status: 'available', time: 'Now' },
-    { id: 2, name: 'Prof. Neha Gupta', role: 'AI Specialist', status: 'busy', time: '14:00' },
-    { id: 3, name: 'Mr. Rahul Verma', role: 'Cyber Labs', status: 'available', time: 'Now' },
-  ]
+      if (resData) setResources(resData)
+      if (facData) setFaculty(facData)
+      
+      setLoading(false)
+    }
+    fetchData()
+  }, [])
 
   const filteredResources = resources.filter(item => 
     item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.author.toLowerCase().includes(searchQuery.toLowerCase())
+    item.author_name.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   const filteredFaculty = faculty.filter(prof => 
@@ -69,7 +99,9 @@ export default function Academy() {
 
       {/* Content Area */}
       <div className="space-y-4">
-        {activeSection === 'resources' ? (
+        {loading ? (
+          <div className="text-center py-10 text-slate-500 text-sm animate-pulse">Loading Academy Data...</div>
+        ) : activeSection === 'resources' ? (
           <>
             <h2 className="text-white font-semibold px-1">Recent Uploads</h2>
             {filteredResources.length === 0 ? (
@@ -83,7 +115,7 @@ export default function Academy() {
                     </div>
                     <div>
                       <h3 className="text-white text-sm font-medium">{item.title}</h3>
-                      <p className="text-xs text-slate-500">{item.author} • {item.size}</p>
+                      <p className="text-xs text-slate-500">{item.author_name} • {item.size}</p>
                     </div>
                   </div>
                   <button className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">
