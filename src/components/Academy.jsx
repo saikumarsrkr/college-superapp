@@ -202,7 +202,7 @@ export default function Academy() {
               )}
             </>
           )
-        }
+        )}
       </div>
     </div>
   )

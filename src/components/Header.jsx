@@ -57,7 +57,6 @@ export default function Header({ ghostMode, setGhostMode, toggleChat }) {
         </button>
         </div>
       </div>
-      </div>
     </header>
   )
 }
