@@ -11,16 +11,18 @@ import Login from './components/Login'
 import AdminLogin from './components/AdminLogin'
 import AdminDashboard from './components/AdminDashboard'
 import ChatSystem from './components/ChatSystem'
+import CanteenApp from './canteen/CanteenApp'
 import { supabase } from './lib/supabase'
 
 /**
  * Main Application Component
  * 
- * Handles authentication state, role-based routing (Admin vs Student),
+ * Handles authentication state, role-based routing (Admin vs Student vs Canteen),
  * and renders the appropriate layout based on the current context.
  * 
  * Contexts:
  * - Admin Context: Detected via 'admin' subdomain or '/admin' path.
+ * - Canteen Context: Detected via 'canteen' subdomain or '/canteen' path.
  * - Student Context: Default view.
  * 
  * @component
@@ -37,6 +39,7 @@ function App() {
   const hostname = window.location.hostname
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
   const isAdminContext = hostname.startsWith('admin.') || (isLocal && window.location.pathname === '/admin')
+  const isCanteenContext = hostname.startsWith('canteen.') || (isLocal && window.location.pathname === '/canteen')
 
   /**
    * Fetches the user's role from the 'profiles' table.
@@ -80,6 +83,11 @@ function App() {
   }
 
   // --- ROUTING LOGIC ---
+
+  // 0. If on Canteen Subdomain/Path
+  if (isCanteenContext) {
+    return <CanteenApp />
+  }
 
   // 1. If on Admin Subdomain/Path
   if (isAdminContext) {
