@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import { Plus, Trash, LogOut, Utensils, BookOpen, Trophy, Save, X } from 'lucide-react'
+import { Plus, Trash, LogOut, Utensils, BookOpen, Trophy, Save, X, ExternalLink, Coffee } from 'lucide-react'
 
 /**
  * Admin Dashboard Component
  * 
  * The central command center for administrators.
  * Features:
- * - Real-time management of Dining, Classes, and Skills.
+ * - Real-time management of Dining (Mess), Classes, and Skills.
+ * - Quick link to Canteen Management Portal.
  * - CRUD operations via Supabase (R/W access for Admins).
- * - Live subscription to table changes.
  * 
  * @component
  * @param {Object} props - Component props.
@@ -139,7 +139,7 @@ export default function AdminDashboard({ onLogout }) {
         {/* Navigation */}
         <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
           {[
-            { id: 'dining', icon: Utensils, label: 'Dining Menu', desc: 'Manage meals & timings' },
+            { id: 'dining', icon: Utensils, label: 'Mess Menu', desc: 'Hostel meal plans' },
             { id: 'classes', icon: BookOpen, label: 'Timetable', desc: 'Schedule classes & labs' },
             { id: 'skills', icon: Trophy, label: 'Skill Tree', desc: 'Gamification rewards' },
           ].map(({ id, icon, label, desc }) => {
@@ -164,6 +164,25 @@ export default function AdminDashboard({ onLogout }) {
               </div>
             </button>
           )})}
+          
+          {/* External Link to Canteen Portal */}
+          <a
+            href="http://canteen.localhost:5173" // Update this for prod to https://canteen.saikumar.space
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative flex-1 min-w-[240px] p-5 rounded-2xl border border-zinc-800 bg-black hover:border-orange-500/50 hover:bg-zinc-900 transition-all duration-300 group overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 p-4 opacity-10 text-orange-500 scale-100 group-hover:scale-110 group-hover:rotate-12 transition-transform duration-500">
+              <Coffee size={80} />
+            </div>
+            <div className="relative z-10">
+              <Coffee size={24} className="mb-3 text-orange-500" />
+              <h3 className="text-lg font-bold text-zinc-400 group-hover:text-white flex items-center gap-2">
+                Canteen Ops <ExternalLink size={14} />
+              </h3>
+              <p className="text-xs text-zinc-600 mt-1">Manage orders & inventory</p>
+            </div>
+          </a>
         </div>
 
         {/* Main Content Area */}
