@@ -4,7 +4,7 @@ drop table if exists faculty;
 
 -- 1. RESOURCES TABLE
 create table resources (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   title text not null,
   type text check (type in ('PDF', 'DOCX', 'LINK', 'VIDEO')),
   size text,
@@ -15,7 +15,7 @@ create table resources (
 
 -- 2. FACULTY TABLE
 create table faculty (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   role text,
   status text check (status in ('available', 'busy', 'offline')),

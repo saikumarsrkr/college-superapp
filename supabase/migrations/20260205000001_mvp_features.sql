@@ -1,6 +1,6 @@
 -- 1. ACADEMIC & PRODUCTIVITY
 create table resources (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   title text not null,
   category text, -- 'Notes', 'Papers', 'Lab Manuals'
   file_url text not null,
@@ -9,7 +9,7 @@ create table resources (
 );
 
 create table faculty (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   specialization text, -- 'AI', 'Soil Science', 'Network Security'
   is_available boolean default true,
@@ -18,7 +18,7 @@ create table faculty (
 
 -- 2. LIFESTYLE & CANTEEN
 create table canteen_items (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   price numeric(10,2),
   stock_status text, -- 'Available', 'Low Stock', 'Sold Out'
@@ -26,7 +26,7 @@ create table canteen_items (
 );
 
 create table orders (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   items jsonb, -- Array of item IDs and quantities
   status text default 'cooking', -- 'cooking', 'ready', 'delivered'
@@ -36,7 +36,7 @@ create table orders (
 
 -- 3. HOSTEL & OUT-PASS
 create table out_passes (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   reason text,
   destination text,
@@ -50,7 +50,7 @@ alter table profiles add column if not exists branch text; -- 'CSE', 'Ag', 'Mech
 alter table profiles add column if not exists growth_score integer default 0;
 
 create table leaderboards (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   month text, -- 'Feb-2026'
   student_id uuid references profiles(id),
   rank integer,
@@ -59,7 +59,7 @@ create table leaderboards (
 
 -- 5. COMMUNITY (Anonymous)
 create table anonymous_posts (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   content text not null,
   upvotes integer default 0,
   is_verified_truth boolean default false, -- Peer verification flag
@@ -68,7 +68,7 @@ create table anonymous_posts (
 
 -- 6. CYBERSECURITY MODE
 create table ctf_challenges (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   title text,
   difficulty text, -- 'Easy', 'Hard', 'Insane'
   points integer,

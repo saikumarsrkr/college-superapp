@@ -2,14 +2,14 @@
 
 -- 1. Canteen Categories
 create table if not exists canteen_categories (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null unique,
   created_at timestamptz default now()
 );
 
 -- 2. Canteen Items
 create table if not exists canteen_items (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   description text,
   price numeric not null check (price >= 0),
@@ -25,7 +25,7 @@ create table if not exists canteen_items (
 
 -- 3. Canteen Inventory (Raw Materials)
 create table if not exists canteen_inventory (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   item_name text not null unique,
   quantity numeric default 0,
   unit text default 'units', -- kg, liters, units, etc.
@@ -61,7 +61,7 @@ exception
 end $$;
 
 create table if not exists canteen_orders (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references profiles(id) not null, -- References public profile for easier joining
   status order_status default 'pending',
   payment_status payment_status default 'pending',
@@ -73,7 +73,7 @@ create table if not exists canteen_orders (
 
 -- 6. Canteen Order Items
 create table if not exists canteen_order_items (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   order_id uuid references canteen_orders(id) on delete cascade not null,
   item_id uuid references canteen_items(id) on delete set null,
   -- item_name text not null, -- Snapshot in case item is deleted (removed to avoid complexity for now, reliance on item_id or history table is better, but let's keep it simple)

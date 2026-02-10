@@ -1,6 +1,6 @@
 -- 1. ACADEMIC & FACULTY
 create table faculty_profiles (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references auth.users, -- If faculty have login
   name text not null,
   role text, -- 'Professor', 'HOD', 'Assistant'
@@ -13,7 +13,7 @@ create table faculty_profiles (
 
 -- 2. LIBRARY & RESOURCES
 create table library_books (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   title text not null,
   author text,
   isbn text,
@@ -23,7 +23,7 @@ create table library_books (
 );
 
 create table library_loans (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   book_id uuid references library_books(id),
   student_id uuid references profiles(id),
   due_date timestamptz not null,
@@ -33,7 +33,7 @@ create table library_loans (
 
 -- 3. HOSTEL & ISSUES (Enhanced)
 create table hostel_issues (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   block text not null,
   room_number text not null,
@@ -48,7 +48,7 @@ create table hostel_issues (
 );
 
 create table mess_feedback (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   meal_date date default current_date,
   meal_type text, -- 'Lunch', 'Dinner'
   rating int check (rating >= 1 and rating <= 5),
@@ -59,7 +59,7 @@ create table mess_feedback (
 
 -- 4. COMMUNITY & TRUTH SHARE
 create table truth_posts (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   content text not null,
   category text, -- 'Faculty', 'Campus', 'Events'
   is_anonymous boolean default true,
@@ -71,7 +71,7 @@ create table truth_posts (
 
 -- 5. STARTUP INCUBATOR
 create table startup_ideas (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   founder_id uuid references profiles(id),
   title text not null,
   description text,
@@ -81,7 +81,7 @@ create table startup_ideas (
 
 -- 6. WALLET
 create table wallet_transactions (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   amount numeric(10,2) not null,
   type text, -- 'credit', 'debit'

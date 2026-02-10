@@ -18,7 +18,7 @@ create table if not exists profiles (
 
 -- 2. CLASSES (Timetable)
 create table if not exists classes (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   code text not null,
   name text not null,
   room text,
@@ -30,7 +30,7 @@ create table if not exists classes (
 
 -- 3. TICKETS (Governance)
 create table if not exists tickets (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   title text not null,
   description text,
@@ -43,7 +43,7 @@ create table if not exists tickets (
 
 -- 4. MEALS (Dining)
 create table if not exists meals (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   items text,
   served_at time,
@@ -52,7 +52,7 @@ create table if not exists meals (
 
 -- 5. SKILLS (Arena)
 create table if not exists skills (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   category text,
   xp_reward integer default 100
@@ -72,13 +72,13 @@ exception
 end $$;
 
 create table if not exists canteen_categories (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null unique,
   created_at timestamptz default now()
 );
 
 create table if not exists canteen_items (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   description text,
   price numeric not null check (price >= 0),
@@ -92,7 +92,7 @@ create table if not exists canteen_items (
 );
 
 create table if not exists canteen_inventory (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   item_name text not null unique,
   quantity numeric default 0,
   unit text default 'units',
@@ -107,7 +107,7 @@ create table if not exists canteen_settings (
 );
 
 create table if not exists canteen_orders (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   user_id uuid references profiles(id) not null,
   status order_status default 'pending',
   payment_status payment_status default 'pending',
@@ -118,7 +118,7 @@ create table if not exists canteen_orders (
 );
 
 create table if not exists canteen_order_items (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   order_id uuid references canteen_orders(id) on delete cascade not null,
   item_id uuid references canteen_items(id) on delete set null,
   quantity integer not null check (quantity > 0),
@@ -236,4 +236,21 @@ begin
 end;
 $$;
 
-alter publication supabase_realtime add table canteen_orders, tickets, meals;
+do $$
+begin
+  -- Add canteen_orders if not already in publication
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'canteen_orders') then
+    alter publication supabase_realtime add table canteen_orders;
+  end if;
+  
+  -- Add tickets if not already in publication
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'tickets') then
+    alter publication supabase_realtime add table tickets;
+  end if;
+
+  -- Add meals if not already in publication
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'meals') then
+    alter publication supabase_realtime add table meals;
+  end if;
+end;
+$$;

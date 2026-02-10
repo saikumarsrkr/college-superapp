@@ -1,6 +1,6 @@
 -- 1. MESSAGES TABLE
 create table if not exists messages (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   sender_id uuid references profiles(id) not null,
   receiver_id uuid references profiles(id) not null,
   content text not null,

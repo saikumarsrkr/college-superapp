@@ -161,18 +161,19 @@ export default function Menu({ role }) {
       setFormData({
         ...item,
         recipe: JSON.stringify(item.recipe || {}, null, 2),
-        // Ensure nulls are empty strings for inputs
         daily_limit: item.daily_limit ?? '',
         current_stock: item.current_stock ?? '',
         category_id: item.category_id ?? ''
       })
     } else {
       setEditingItem(null)
+      // Default to first category if available
+      const defaultCategory = categories.length > 0 ? categories[0].id : ''
       setFormData({
         name: '',
         description: '',
         price: '',
-        category_id: categories[0]?.id || '',
+        category_id: defaultCategory,
         is_available: true,
         daily_limit: '',
         current_stock: '',

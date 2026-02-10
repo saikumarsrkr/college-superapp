@@ -16,7 +16,7 @@ create table profiles (
 
 -- 2. CLASSES (Timetable)
 create table classes (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   code text not null, -- e.g., CS-101
   name text not null,
   room text,
@@ -28,7 +28,7 @@ create table classes (
 
 -- 3. ATTENDANCE LOGS
 create table attendance_logs (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   class_id uuid references classes(id),
   status text check (status in ('present', 'absent', 'late', 'excused')),
@@ -39,7 +39,7 @@ create table attendance_logs (
 
 -- 4. TICKETS (Governance)
 create table tickets (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   title text not null,
   description text,
@@ -52,7 +52,7 @@ create table tickets (
 
 -- 5. SKILLS (Arena)
 create table skills (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null,
   category text,
   prerequisite_id uuid references skills(id),
@@ -68,7 +68,7 @@ create table student_skills (
 
 -- 6. MEALS (Dining)
 create table meals (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   name text not null, -- 'Breakfast', 'Lunch'
   items text,
   served_at time,
@@ -76,7 +76,7 @@ create table meals (
 );
 
 create table meal_ratings (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   meal_id uuid references meals(id),
   student_id uuid references profiles(id),
   rating integer check (rating >= 1 and rating <= 5),
@@ -86,7 +86,7 @@ create table meal_ratings (
 
 -- 7. DOCUMENTS (Vault)
 create table documents (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default gen_random_uuid() primary key,
   student_id uuid references profiles(id),
   name text not null,
   type text, -- 'Identity', 'Academic', 'Financial'
